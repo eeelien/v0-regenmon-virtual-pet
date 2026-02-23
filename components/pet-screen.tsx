@@ -12,7 +12,7 @@ import {
 } from "@/lib/regenmon"
 import { loadMemories, extractMemories, addMemory } from "@/lib/memory"
 import type { Memory } from "@/lib/memory"
-import { generatePetResponse } from "@/lib/chat"
+// AI chat via API (replaced local generatePetResponse)
 import { StatBar } from "@/components/stat-bar"
 import { ChatContainer, type ChatMessage } from "@/components/chat-bubble"
 import { MemoryIndicator } from "@/components/memory-indicator"
@@ -128,7 +128,9 @@ export function PetScreen({ data, onUpdate, onReset }: PetScreenProps) {
     setTimeout(() => spawnStatChange("Felicidad", -5, "#ff6b6b"), 300)
   }
 
-  function handleChatSend(text: string) {
+  const CHAT_API_URL = "https://v0-regenmon-virtual-pet-three.vercel.app/api/demo/chat"
+
+  async function handleChatSend(text: string) {
     const userMsg: ChatMessage = {
       id: ++msgId,
       text,
@@ -145,15 +147,48 @@ export function PetScreen({ data, onUpdate, onReset }: PetScreenProps) {
       setMemories(currentMemories)
     }
 
-    const responseText = generatePetResponse(text, data, currentMemories)
-    const petMsg: ChatMessage = {
+    // Show user message + typing indicator
+    const typingMsg: ChatMessage = {
       id: ++msgId,
-      text: responseText,
+      text: "...",
       sender: "pet",
       timestamp: Date.now(),
     }
+    setMessages((prev) => [...prev, userMsg, typingMsg])
 
-    setMessages((prev) => [...prev, userMsg, petMsg])
+    try {
+      const res = await fetch(CHAT_API_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          message: text,
+          petName: data.name,
+          petType: data.type,
+          petStage: data.stage,
+          stats: { hunger: data.hunger, energy: data.energy, happiness: data.happiness },
+          memories: currentMemories,
+        }),
+      })
+      const json = await res.json()
+      const responseText = json.reply || `*${data.name} te mira confundido*`
+
+      const petMsg: ChatMessage = {
+        id: ++msgId,
+        text: responseText,
+        sender: "pet",
+        timestamp: Date.now(),
+      }
+      // Replace typing indicator with real response
+      setMessages((prev) => [...prev.slice(0, -1), petMsg])
+    } catch {
+      const petMsg: ChatMessage = {
+        id: ++msgId,
+        text: `*${data.name} ladea la cabeza* No puedo hablar ahorita...`,
+        sender: "pet",
+        timestamp: Date.now(),
+      }
+      setMessages((prev) => [...prev.slice(0, -1), petMsg])
+    }
   }
 
   const mood = data.happiness > 70 ? "Feliz" : data.happiness > 40 ? "Normal" : "Triste"

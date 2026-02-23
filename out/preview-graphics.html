@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RegenMon — Virtual Pet Preview</title>
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--semilla:#4cd964;--gota:#209cee;--chispa:#ffdd57;--bg:#1a1a2e;--panel:#16213e;--border:#e2e2e2}
+body{background:var(--bg);color:#fff;font-family:'Press Start 2P',monospace;font-size:10px;min-height:100vh;padding:20px}
+h1{text-align:center;font-size:14px;margin-bottom:6px;background:linear-gradient(90deg,var(--semilla),var(--gota),var(--chispa));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.subtitle{text-align:center;font-size:8px;color:#888;margin-bottom:20px}
+.nes-box{border:4px solid var(--border);padding:16px;margin-bottom:16px;background:var(--panel);image-rendering:pixelated;position:relative}
+.nes-box::before{content:'';position:absolute;inset:-4px;border:4px solid #000;pointer-events:none;z-index:0}
+.nes-box-title{position:absolute;top:-12px;left:16px;background:var(--panel);padding:0 8px;font-size:8px;color:var(--chispa)}
+.row{display:flex;gap:16px;justify-content:center;flex-wrap:wrap}
+.showcase-card{flex:1;min-width:180px;max-width:240px;display:flex;flex-direction:column;align-items:center;padding:12px}
+.showcase-card h3{font-size:8px;margin-bottom:8px}
+
+/* ===== CREATURE CONTAINER ===== */
+.creature-wrap{position:relative;display:inline-block;cursor:pointer}
+.creature-wrap.state-happy .body-main{animation:happy .5s ease 1}
+.creature-wrap.state-sad .body-main{filter:saturate(0.4);animation:sad .8s ease forwards}
+.creature-wrap.state-hungry .body-main{animation:hungry 1s ease infinite}
+.creature-wrap.state-sick .body-main{filter:hue-rotate(80deg) saturate(0.6);animation:sick .6s ease infinite}
+.creature-wrap.state-eating .body-main{animation:eating .3s ease 4}
+.creature-wrap.state-sleeping .eye-l,.creature-wrap.state-sleeping .eye-r{height:2px!important;border-radius:50%}
+.creature-wrap.state-sleeping .zzz{display:block}
+.creature-wrap.state-sleeping .body-main{animation:sleeping 3s ease-in-out infinite}
+.creature-wrap.state-sleeping .mouth{border-radius:50%;width:6px;height:6px;border:none;background:rgba(0,0,0,0.3)}
+
+/* ===== BODY ===== */
+.body-main{position:relative;animation:idle 2.5s ease-in-out infinite;transition:filter .3s}
+
+/* ===== EYES ===== */
+.eyes{position:absolute;display:flex;gap:var(--eye-gap,14px);top:var(--eye-top,30%);left:50%;transform:translateX(-50%);z-index:3}
+.eye-l,.eye-r{width:var(--eye-size,10px);height:var(--eye-size,10px);background:#fff;border-radius:50%;position:relative;animation:blink 3.5s infinite}
+.eye-l::after,.eye-r::after{content:'';position:absolute;width:55%;height:55%;background:#222;border-radius:50%;top:25%;left:25%}
+.eye-l::before,.eye-r::before{content:'';position:absolute;width:25%;height:25%;background:#fff;border-radius:50%;top:15%;right:20%;z-index:1}
+.creature-wrap.state-sad .eye-l,.creature-wrap.state-sad .eye-r{height:calc(var(--eye-size,10px)*0.5);margin-top:calc(var(--eye-size,10px)*0.25)}
+.mouth{position:absolute;bottom:var(--mouth-bottom,25%);left:50%;transform:translateX(-50%);width:var(--mouth-w,12px);height:var(--mouth-h,6px);border-bottom:2px solid rgba(0,0,0,0.4);border-radius:0 0 50% 50%;z-index:3}
+.creature-wrap.state-sad .mouth{border-bottom:none;border-top:2px solid rgba(0,0,0,0.4);border-radius:50% 50% 0 0}
+.creature-wrap.state-hungry .mouth{width:8px;height:8px;border:none;background:rgba(0,0,0,0.3);border-radius:50%;animation:chomp 1s ease infinite}
+.creature-wrap.state-eating .mouth{animation:chomp .3s ease infinite}
+
+/* ===== ZZZ ===== */
+.zzz{display:none;position:absolute;top:-20px;right:-10px;font-size:12px;z-index:5;animation:zzz 2s ease-in-out infinite;color:var(--chispa)}
+
+/* ===== SEMILLA ===== */
+.semilla .body-core{width:var(--bw,60px);height:var(--bh,65px);background:radial-gradient(ellipse at 35% 30%,#7ee896,var(--semilla),#35a34a);border-radius:50% 50% 48% 48%;position:relative;box-shadow:inset -4px -6px 12px rgba(0,0,0,0.2),0 6px 14px rgba(0,0,0,0.4)}
+.semilla .leaf{position:absolute;top:calc(var(--leaf-top,-14px));left:50%;transform:translateX(-50%) rotate(-15deg);width:var(--leaf-w,18px);height:var(--leaf-h,22px);background:linear-gradient(135deg,#6fef8d,#2ea84a);border-radius:2px 70% 2px 70%;z-index:2;animation:leafSway 3s ease-in-out infinite}
+.semilla .leaf::after{content:'';position:absolute;width:1px;height:70%;background:rgba(0,0,0,0.15);top:15%;left:50%;transform:rotate(10deg)}
+.semilla .roots{position:absolute;bottom:-8px;left:50%;transform:translateX(-50%);display:flex;gap:4px}
+.semilla .root{width:3px;height:var(--root-h,10px);background:linear-gradient(to bottom,#8b6c42,#5c3d1e);border-radius:0 0 2px 2px}
+.semilla .root:nth-child(1){transform:rotate(-15deg)}.semilla .root:nth-child(3){transform:rotate(15deg)}
+
+/* ===== GOTA ===== */
+.gota .body-core{width:var(--bw,55px);height:var(--bh,70px);background:radial-gradient(ellipse at 35% 30%,#6cc4f7,var(--gota),#1570a6);border-radius:50% 50% 50% 50% / 35% 35% 65% 65%;position:relative;box-shadow:inset -4px -6px 12px rgba(0,0,0,0.2),0 6px 14px rgba(0,0,0,0.3)}
+.gota .drop-tip{position:absolute;top:calc(var(--tip-top,-12px));left:50%;transform:translateX(-50%);width:0;height:0;border-left:var(--tip-s,8px) solid transparent;border-right:var(--tip-s,8px) solid transparent;border-bottom:var(--tip-b,14px) solid var(--gota)}
+.gota .ripple{position:absolute;bottom:-10px;left:50%;transform:translateX(-50%);width:var(--ripple-w,50px);height:8px;border:2px solid rgba(32,156,238,0.4);border-radius:50%;animation:ripple 2s ease-in-out infinite}
+.gota .ripple::after{content:'';position:absolute;bottom:-5px;left:-6px;width:calc(100% + 12px);height:6px;border:2px solid rgba(32,156,238,0.2);border-radius:50%;animation:ripple 2s ease-in-out .5s infinite}
+.gota .shine{position:absolute;top:20%;left:22%;width:6px;height:10px;background:rgba(255,255,255,0.4);border-radius:50%;transform:rotate(-20deg)}
+
+/* ===== CHISPA ===== */
+.chispa .body-core{width:var(--bw,58px);height:var(--bh,58px);background:radial-gradient(ellipse at 35% 30%,#fff3a0,var(--chispa),#e6b800);border-radius:50%;position:relative;box-shadow:inset -4px -4px 10px rgba(0,0,0,0.15),0 0 20px rgba(255,221,87,0.4),0 6px 14px rgba(0,0,0,0.3)}
+.chispa .spike{position:absolute;width:0;height:0;border-left:var(--spike-s,6px) solid transparent;border-right:var(--spike-s,6px) solid transparent;border-bottom:var(--spike-h,16px) solid var(--chispa)}
+.chispa .spike:nth-child(1){top:calc(var(--spike-h,-16px) * -1);left:50%;transform:translateX(-50%)}
+.chispa .spike:nth-child(2){bottom:calc(var(--spike-h,16px) * -1);left:50%;transform:translateX(-50%) rotate(180deg)}
+.chispa .spike:nth-child(3){left:calc(var(--spike-h,16px) * -1);top:50%;transform:translateY(-50%) rotate(-90deg)}
+.chispa .spike:nth-child(4){right:calc(var(--spike-h,16px) * -1);top:50%;transform:translateY(-50%) rotate(90deg)}
+.chispa .sparkle{position:absolute;width:4px;height:4px;background:#fff;border-radius:50%;animation:sparkle 1.5s ease-in-out infinite;opacity:0}
+.chispa .sparkle:nth-child(6){top:-8px;right:-4px;animation-delay:0s}
+.chispa .sparkle:nth-child(7){bottom:0;left:-8px;animation-delay:.5s}
+.chispa .sparkle:nth-child(8){top:10px;right:-10px;animation-delay:1s}
+
+/* ===== HUEVO (EGG) ===== */
+.stage-huevo .body-core{border-radius:45% 45% 50% 50%!important;background:radial-gradient(ellipse at 40% 35%,#f5f5f0,#ddd,#c5c5b8)!important;box-shadow:inset -3px -4px 8px rgba(0,0,0,0.15),0 4px 10px rgba(0,0,0,0.3)!important}
+.stage-huevo .eyes,.stage-huevo .mouth,.stage-huevo .leaf,.stage-huevo .roots,.stage-huevo .drop-tip,.stage-huevo .ripple,.stage-huevo .shine,.stage-huevo .spike,.stage-huevo .sparkle{display:none!important}
+.stage-huevo .body-main{animation:wobble 3s ease-in-out infinite}
+.stage-huevo .egg-spots{display:block!important}
+.egg-spots{display:none!important;position:absolute;inset:0;z-index:2}
+.egg-spot{position:absolute;border-radius:50%}
+
+/* ===== SWEAT (sick) ===== */
+.sweat{display:none;position:absolute;top:20%;right:-4px;width:5px;height:7px;background:rgba(100,180,255,0.7);border-radius:0 50% 50% 50%;animation:sweatDrop 1s ease infinite;z-index:5}
+.creature-wrap.state-sick .sweat{display:block}
+
+/* ===== STAGE SIZES ===== */
+.stage-huevo{--bw:45px;--bh:55px;--eye-size:0;--eye-gap:0}
+.stage-bebe{--bw:50px;--bh:55px;--eye-size:11px;--eye-gap:12px;--eye-top:28%;--mouth-bottom:22%;--mouth-w:10px;--leaf-top:-12px;--leaf-w:14px;--leaf-h:18px;--root-h:8px;--tip-top:-10px;--tip-s:6px;--tip-b:12px;--ripple-w:40px;--spike-s:5px;--spike-h:12px}
+.stage-joven{--bw:70px;--bh:75px;--eye-size:11px;--eye-gap:16px;--eye-top:30%;--mouth-bottom:24%;--mouth-w:13px;--leaf-top:-16px;--leaf-w:20px;--leaf-h:24px;--root-h:12px;--tip-top:-14px;--tip-s:8px;--tip-b:16px;--ripple-w:55px;--spike-s:7px;--spike-h:18px}
+.stage-adulto{--bw:90px;--bh:95px;--eye-size:13px;--eye-gap:20px;--eye-top:30%;--mouth-bottom:25%;--mouth-w:16px;--mouth-h:8px;--leaf-top:-20px;--leaf-w:26px;--leaf-h:30px;--root-h:16px;--tip-top:-18px;--tip-s:10px;--tip-b:20px;--ripple-w:70px;--spike-s:9px;--spike-h:22px}
+
+/* ===== KEYFRAMES ===== */
+@keyframes idle{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
+@keyframes blink{0%,44%,50%,100%{height:var(--eye-size,10px)}46%,48%{height:1px}}
+@keyframes happy{0%{transform:translateY(0) scale(1)}30%{transform:translateY(-20px) scale(1.1)}50%{transform:translateY(-20px) scale(1.05)}100%{transform:translateY(0) scale(1)}}
+@keyframes sad{0%{transform:translateY(0)}100%{transform:translateY(6px)}}
+@keyframes hungry{0%,100%{transform:translateX(0)}25%{transform:translateX(-4px) rotate(-2deg)}75%{transform:translateX(4px) rotate(2deg)}}
+@keyframes sick{0%,100%{transform:rotate(0)}25%{transform:rotate(-3deg)}75%{transform:rotate(3deg)}}
+@keyframes eating{0%,100%{transform:scale(1)}50%{transform:scale(1.05)}}
+@keyframes sleeping{0%,100%{transform:translateY(0) rotate(0)}50%{transform:translateY(3px) rotate(1.5deg)}}
+@keyframes wobble{0%,100%{transform:rotate(0)}25%{transform:rotate(-4deg)}75%{transform:rotate(4deg)}}
+@keyframes chomp{0%,100%{transform:translateX(-50%) scaleY(1)}50%{transform:translateX(-50%) scaleY(0.3)}}
+@keyframes zzz{0%{opacity:0;transform:translate(0,0) scale(.6)}50%{opacity:1;transform:translate(8px,-12px) scale(1)}100%{opacity:0;transform:translate(16px,-24px) scale(1.2)}}
+@keyframes ripple{0%,100%{transform:translateX(-50%) scaleX(1);opacity:.6}50%{transform:translateX(-50%) scaleX(1.3);opacity:.2}}
+@keyframes sparkle{0%,100%{opacity:0;transform:scale(0)}50%{opacity:1;transform:scale(1.5)}}
+@keyframes leafSway{0%,100%{transform:translateX(-50%) rotate(-15deg)}50%{transform:translateX(-50%) rotate(-5deg)}}
+@keyframes sweatDrop{0%{opacity:0;transform:translateY(0)}50%{opacity:1}100%{opacity:0;transform:translateY(12px)}}
+
+/* ===== CONTROLS ===== */
+.controls{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-top:12px}
+select,button{font-family:'Press Start 2P',monospace;font-size:8px;padding:6px 10px;border:3px solid var(--border);background:var(--panel);color:#fff;cursor:pointer;image-rendering:pixelated}
+select:hover,button:hover{background:#2a3a5e}
+button.active{background:#3a4a7e;border-color:var(--chispa)}
+.playground{display:flex;flex-direction:column;align-items:center;min-height:260px;justify-content:center}
+.playground .creature-wrap{transform:scale(1.4);margin:30px 0}
+.state-btns{display:flex;flex-wrap:wrap;gap:6px;justify-content:center}
+.info{text-align:center;font-size:7px;color:#666;margin-top:12px}
+</style>
+</head>
+<body>
+<h1>🌱💧✨ RegenMon Preview</h1>
+<p class="subtitle">Virtual Pet Creatures — CSS Only</p>
+
+<!-- SHOWCASE: 3 side by side -->
+<div class="nes-box">
+<span class="nes-box-title">✦ Showcase — Bebé Stage</span>
+<div class="row" id="showcase"></div>
+</div>
+
+<!-- EVOLUTION STAGES -->
+<div class="nes-box">
+<span class="nes-box-title">✦ Evolution Stages</span>
+<div id="evo-row" class="row"></div>
+</div>
+
+<!-- INTERACTIVE PLAYGROUND -->
+<div class="nes-box">
+<span class="nes-box-title">✦ Playground</span>
+<div class="controls">
+<select id="sel-type" onchange="updatePlayground()">
+<option value="semilla">🌱 Semilla</option>
+<option value="gota">💧 Gota</option>
+<option value="chispa">✨ Chispa</option>
+</select>
+<select id="sel-stage" onchange="updatePlayground()">
+<option value="huevo">Huevo</option>
+<option value="bebe">Bebé</option>
+<option value="joven">Joven</option>
+<option value="adulto">Adulto</option>
+</select>
+</div>
+<div class="playground" id="playground"></div>
+<div class="state-btns" id="state-btns">
+<button onclick="setState('idle')">😊 Idle</button>
+<button onclick="setState('happy')">🎉 Happy</button>
+<button onclick="setState('sad')">😢 Sad</button>
+<button onclick="setState('hungry')">🍽 Hungry</button>
+<button onclick="setState('sick')">🤒 Sick</button>
+<button onclick="setState('eating')">🍎 Eating</button>
+<button onclick="setState('sleeping')">😴 Sleeping</button>
+</div>
+</div>
+
+<p class="info">Click any creature for a happy bounce! • Pure CSS animations, no libraries.</p>
+
+<script>
+const TYPES = ['semilla','gota','chispa'];
+const STAGES = ['huevo','bebe','joven','adulto'];
+const COLORS = {semilla:'#4cd964',gota:'#209cee',chispa:'#ffdd57'};
+const EMOJIS = {semilla:'🌱',gota:'💧',chispa:'✨'};
+
+function makeCreature(type, stage) {
+  const c = COLORS[type];
+  let inner = '';
+  if (type === 'semilla') {
+    inner = `<div class="leaf"></div>
+      <div class="body-core">
+        <div class="egg-spots"><div class="egg-spot" style="width:10px;height:10px;background:${c};top:25%;left:20%"></div><div class="egg-spot" style="width:7px;height:7px;background:${c};top:50%;left:60%"></div><div class="egg-spot" style="width:5px;height:5px;background:${c};top:65%;left:30%"></div></div>
+        <div class="eyes"><div class="eye-l"></div><div class="eye-r"></div></div>
+        <div class="mouth"></div>
+      </div>
+      <div class="roots"><div class="root"></div><div class="root"></div><div class="root"></div></div>`;
+  } else if (type === 'gota') {
+    inner = `<div class="drop-tip"></div>
+      <div class="body-core">
+        <div class="shine"></div>
+        <div class="egg-spots"><div class="egg-spot" style="width:10px;height:10px;background:${c};top:25%;left:20%"></div><div class="egg-spot" style="width:7px;height:7px;background:${c};top:55%;left:55%"></div><div class="egg-spot" style="width:5px;height:5px;background:${c};top:40%;left:35%"></div></div>
+        <div class="eyes"><div class="eye-l"></div><div class="eye-r"></div></div>
+        <div class="mouth"></div>
+      </div>
+      <div class="ripple"></div>`;
+  } else {
+    inner = `<div class="spike"></div><div class="spike"></div><div class="spike"></div><div class="spike"></div>
+      <div class="body-core">
+        <div class="egg-spots"><div class="egg-spot" style="width:10px;height:10px;background:${c};top:25%;left:20%"></div><div class="egg-spot" style="width:7px;height:7px;background:${c};top:55%;left:55%"></div><div class="egg-spot" style="width:5px;height:5px;background:${c};top:40%;left:70%"></div></div>
+        <div class="eyes"><div class="eye-l"></div><div class="eye-r"></div></div>
+        <div class="mouth"></div>
+      </div>
+      <div class="sparkle"></div><div class="sparkle"></div><div class="sparkle"></div>`;
+  }
+  return `<div class="creature-wrap ${type} stage-${stage}" onclick="tapCreature(this)">
+    <div class="body-main">${inner}</div>
+    <div class="zzz">Z<span style="font-size:9px">z</span><span style="font-size:7px">z</span></div>
+    <div class="sweat"></div>
+  </div>`;
+}
+
+function tapCreature(el) {
+  el.classList.remove('state-happy');
+  void el.offsetWidth;
+  el.classList.add('state-happy');
+  setTimeout(() => el.classList.remove('state-happy'), 600);
+}
+
+// Showcase
+const showcase = document.getElementById('showcase');
+TYPES.forEach(t => {
+  showcase.innerHTML += `<div class="showcase-card"><h3>${EMOJIS[t]} ${t.charAt(0).toUpperCase()+t.slice(1)}</h3>${makeCreature(t,'bebe')}</div>`;
+});
+
+// Evolution
+const evoRow = document.getElementById('evo-row');
+STAGES.forEach(s => {
+  evoRow.innerHTML += `<div class="showcase-card"><h3>${s.charAt(0).toUpperCase()+s.slice(1)}</h3>${makeCreature('semilla',s)}</div>`;
+});
+
+// Playground
+function updatePlayground() {
+  const t = document.getElementById('sel-type').value;
+  const s = document.getElementById('sel-stage').value;
+  document.getElementById('playground').innerHTML = makeCreature(t, s);
+}
+updatePlayground();
+
+let currentState = '';
+function setState(state) {
+  const pg = document.getElementById('playground');
+  const c = pg.querySelector('.creature-wrap');
+  if (!c) return;
+  c.className = c.className.replace(/state-\w+/g, '').trim();
+  if (state !== 'idle') {
+    void c.offsetWidth;
+    c.classList.add('state-' + state);
+  }
+  document.querySelectorAll('.state-btns button').forEach(b => b.classList.remove('active'));
+  event.target.classList.add('active');
+  if (state === 'happy' || state === 'eating') {
+    setTimeout(() => c.classList.remove('state-' + state), state === 'eating' ? 1200 : 600);
+  }
+}
+</script>
+</body>
+</html>
