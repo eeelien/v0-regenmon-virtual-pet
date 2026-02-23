@@ -40,13 +40,13 @@ export function PetScreen({ data, onUpdate, onReset }: PetScreenProps) {
   const [actionFeedback, setActionFeedback] = useState<string | null>(null)
   const [isAnimating, setIsAnimating] = useState(false)
   const [moodOverride, setMoodOverride] = useState<PetMood | undefined>(undefined)
+  const config = TYPE_CONFIG[data.type]
   const currentMood = getPetMood(data, moodOverride)
   const currentSprite = config.images[currentMood]
   const [messages, setMessages] = useState<ChatMessage[]>([])
   const [memories, setMemories] = useState<Memory[]>([])
   const [hubRegistered, setHubRegistered] = useState(false)
   const [leaderboard, setLeaderboard] = useState<HubProfile[]>([])
-  const config = TYPE_CONFIG[data.type]
   const floating = useFloatingText()
   const { getLeaderboard } = useHub()
   useHubSync(data)
