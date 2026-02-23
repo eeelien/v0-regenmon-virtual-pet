@@ -42,6 +42,15 @@ export function checkEvolution(totalPoints: number, currentStage: 1 | 2 | 3): 1 
   return currentStage
 }
 
+export type PetMood = "happy" | "sleepy" | "eating" | "sad"
+
+export function getPetMood(data: RegenmonData, actionOverride?: PetMood): PetMood {
+  if (actionOverride) return actionOverride
+  if (data.energy < 25) return "sleepy"
+  if (data.happiness < 30) return "sad"
+  return "happy"
+}
+
 export const TYPE_CONFIG: Record<
   RegenmonType,
   {
@@ -50,6 +59,7 @@ export const TYPE_CONFIG: Record<
     color: string
     colorHex: string
     image: string
+    images: Record<PetMood, string>
     description: string
   }
 > = {
@@ -58,7 +68,13 @@ export const TYPE_CONFIG: Record<
     emoji: "\u{1F331}",
     color: "is-success",
     colorHex: "#4cd964",
-    image: "/regenmon-semilla-new.webp",
+    image: "/semilla-happy.webp",
+    images: {
+      happy: "/semilla-happy.webp",
+      sleepy: "/semilla-sleepy.webp",
+      eating: "/semilla-eating.webp",
+      sad: "/semilla-sad.webp",
+    },
     description: "Naturaleza y vida",
   },
   gota: {
@@ -66,7 +82,13 @@ export const TYPE_CONFIG: Record<
     emoji: "\u{1F4A7}",
     color: "is-primary",
     colorHex: "#209cee",
-    image: "/regenmon-gota-astro.webp",
+    image: "/gota-happy.webp",
+    images: {
+      happy: "/gota-happy.webp",
+      sleepy: "/gota-sleepy.webp",
+      eating: "/gota-eating.webp",
+      sad: "/gota-sad.webp",
+    },
     description: "Agua y serenidad",
   },
   chispa: {
@@ -74,7 +96,13 @@ export const TYPE_CONFIG: Record<
     emoji: "\u2728",
     color: "is-warning",
     colorHex: "#ffdd57",
-    image: "/regenmon-chispa.jpg",
+    image: "/chispa-happy.webp",
+    images: {
+      happy: "/chispa-happy.webp",
+      sleepy: "/chispa-sleepy.webp",
+      eating: "/chispa-eating.webp",
+      sad: "/chispa-sad.webp",
+    },
     description: "Luz y energia",
   },
 }

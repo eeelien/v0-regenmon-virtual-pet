@@ -2,7 +2,8 @@
 
 import { useState, useCallback, useEffect } from "react"
 import Image from "next/image"
-import type { RegenmonData } from "@/lib/regenmon"
+import type { RegenmonData, PetMood } from "@/lib/regenmon"
+import { getPetMood } from "@/lib/regenmon"
 import {
   TYPE_CONFIG,
   saveRegenmon,
@@ -38,6 +39,9 @@ export function PetScreen({ data, onUpdate, onReset }: PetScreenProps) {
   const [showConfirm, setShowConfirm] = useState(false)
   const [actionFeedback, setActionFeedback] = useState<string | null>(null)
   const [isAnimating, setIsAnimating] = useState(false)
+  const [moodOverride, setMoodOverride] = useState<PetMood | undefined>(undefined)
+  const currentMood = getPetMood(data, moodOverride)
+  const currentSprite = config.images[currentMood]
   const [messages, setMessages] = useState<ChatMessage[]>([])
   const [memories, setMemories] = useState<Memory[]>([])
   const [hubRegistered, setHubRegistered] = useState(false)
@@ -95,6 +99,8 @@ export function PetScreen({ data, onUpdate, onReset }: PetScreenProps) {
     saveRegenmon(updated)
     onUpdate(updated)
     showFeedback("Mmmm... delicioso!")
+    setMoodOverride("eating")
+    setTimeout(() => setMoodOverride(undefined), 2000)
     if (hungerDelta > 0) spawnStatChange("Hambre", hungerDelta, "#209cee")
     if (energyDelta > 0) setTimeout(() => spawnStatChange("Energia", energyDelta, "#ffdd57"), 300)
   }
@@ -124,6 +130,8 @@ export function PetScreen({ data, onUpdate, onReset }: PetScreenProps) {
     saveRegenmon(updated)
     onUpdate(updated)
     showFeedback("Zzz... descansando")
+    setMoodOverride("sleepy")
+    setTimeout(() => setMoodOverride(undefined), 2000)
     if (energyDelta > 0) spawnStatChange("Energia", energyDelta, "#ffdd57")
     setTimeout(() => spawnStatChange("Felicidad", -5, "#ff6b6b"), 300)
   }
@@ -322,8 +330,8 @@ export function PetScreen({ data, onUpdate, onReset }: PetScreenProps) {
                   <div className="pet-frame" style={{ borderColor: `${config.colorHex}60` }}>
                     <div className="pet-blink">
                       <Image
-                        src={config.image}
-                        alt={`Tu Regenmon ${data.name}, tipo ${config.label}`}
+                        src={currentSprite}
+                        alt={`Tu Regenmon ${data.name}, tipo ${config.label} - ${currentMood}`}
                         width={160}
                         height={160}
                         className="block"
