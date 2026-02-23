@@ -138,7 +138,7 @@ export function PetScreen({ data, onUpdate, onReset }: PetScreenProps) {
       <header className="w-full max-w-lg flex items-center justify-between animate-slide-up">
         <div className="flex items-center gap-3">
           <h1 className="text-xs" style={{ color: config.colorHex }}>
-            {"Regenmon"}
+            {"🥚 Regenmon"}
           </h1>
           <MemoryIndicator memories={memories} color={config.colorHex} />
         </div>
@@ -229,7 +229,7 @@ export function PetScreen({ data, onUpdate, onReset }: PetScreenProps) {
               aria-label="Alimentar a tu Regenmon"
             >
               <span className="text-xl" aria-hidden="true">{"🍎"}</span>
-              <span>{"Comer"}</span>
+              <span>{"Alimentar"}</span>
             </button>
             <button
               type="button"
@@ -244,10 +244,10 @@ export function PetScreen({ data, onUpdate, onReset }: PetScreenProps) {
               type="button"
               className="action-btn action-btn-yellow"
               onClick={handleSleep}
-              aria-label="Dormir a tu Regenmon"
+              aria-label="Descansar a tu Regenmon"
             >
               <span className="text-xl" aria-hidden="true">{"💤"}</span>
-              <span>{"Dormir"}</span>
+              <span>{"Descansar"}</span>
             </button>
           </div>
         </div>
@@ -258,9 +258,9 @@ export function PetScreen({ data, onUpdate, onReset }: PetScreenProps) {
             {"Estadisticas"}
           </p>
           <div className="flex flex-col gap-4">
-            <StatBar label="Felicidad" value={data.happiness} max={100} colorClass="stat-fill-green" icon="❤️" />
+            <StatBar label="Felicidad" value={data.happiness} max={100} colorClass="stat-fill-green" icon="💚" />
             <StatBar label="Energia" value={data.energy} max={100} colorClass="stat-fill-yellow" icon="⚡" />
-            <StatBar label="Hambre" value={data.hunger} max={100} colorClass="stat-fill-blue" icon="🍖" />
+            <StatBar label="Hambre" value={data.hunger} max={100} colorClass="stat-fill-red" icon="🍎" />
           </div>
         </div>
 
