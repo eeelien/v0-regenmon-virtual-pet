@@ -1,0 +1,85 @@
+{
+  "routes": [
+    {
+      "routePath": "/api/hub/feed",
+      "mountPath": "/api/hub",
+      "method": "GET",
+      "module": [
+        "api/hub/feed.js:onRequestGet"
+      ]
+    },
+    {
+      "routePath": "/api/hub/leaderboard",
+      "mountPath": "/api/hub",
+      "method": "GET",
+      "module": [
+        "api/hub/leaderboard.js:onRequestGet"
+      ]
+    },
+    {
+      "routePath": "/api/hub/register",
+      "mountPath": "/api/hub",
+      "method": "OPTIONS",
+      "module": [
+        "api/hub/register.js:onRequestOptions"
+      ]
+    },
+    {
+      "routePath": "/api/hub/register",
+      "mountPath": "/api/hub",
+      "method": "POST",
+      "module": [
+        "api/hub/register.js:onRequestPost"
+      ]
+    },
+    {
+      "routePath": "/api/hub/sync",
+      "mountPath": "/api/hub",
+      "method": "OPTIONS",
+      "module": [
+        "api/hub/sync.js:onRequestOptions"
+      ]
+    },
+    {
+      "routePath": "/api/hub/sync",
+      "mountPath": "/api/hub",
+      "method": "POST",
+      "module": [
+        "api/hub/sync.js:onRequestPost"
+      ]
+    },
+    {
+      "routePath": "/api/chat",
+      "mountPath": "/api",
+      "method": "OPTIONS",
+      "module": [
+        "api/chat.js:onRequestOptions"
+      ]
+    },
+    {
+      "routePath": "/api/chat",
+      "mountPath": "/api",
+      "method": "POST",
+      "module": [
+        "api/chat.js:onRequestPost"
+      ]
+    },
+    {
+      "routePath": "/api/evaluate",
+      "mountPath": "/api",
+      "method": "OPTIONS",
+      "module": [
+        "api/evaluate.js:onRequestOptions"
+      ]
+    },
+    {
+      "routePath": "/api/evaluate",
+      "mountPath": "/api",
+      "method": "POST",
+      "module": [
+        "api/evaluate.js:onRequestPost"
+      ]
+    }
+  ],
+  "baseURL": "/"
+}

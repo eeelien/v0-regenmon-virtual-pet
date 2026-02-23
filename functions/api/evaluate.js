@@ -5,6 +5,17 @@ const CATEGORY_PROMPTS = {
   aprendizaje: "Evalua esta imagen de notas o ejercicios de estudio. Criterios: esfuerzo visible, comprension del tema, aplicacion practica y organizacion.",
 };
 
+const OFFLINE_FEEDBACK = [
+  "¡Se ve que le echaste ganas! Sigue asi campeón 💪",
+  "¡Buen trabajo! Tu mascota esta orgullosa de ti 🌟",
+  "¡Wow, que cool! Estas aprendiendo muy rapido 🚀",
+  "¡Excelente esfuerzo! Cada dia mejoras mas ⭐",
+  "¡Tu mascota brinca de felicidad al ver tu trabajo! 🎉",
+  "¡Muy bien hecho! La practica hace al maestro 📚",
+  "¡Increible! Sigue asi y seras un experto 🏆",
+  "¡A tu mascota le encanta que entrenes! 🐾",
+];
+
 function parseScore(text) {
   const match = text.match(/Score:\s*(\d+)/i);
   if (match) {
@@ -19,8 +30,16 @@ function parseScore(text) {
   return -1;
 }
 
-function getDefaultScore() {
-  return Math.floor(Math.random() * 21) + 40;
+function offlineResult() {
+  const score = Math.floor(Math.random() * 31) + 50; // 50-80
+  const feedback = OFFLINE_FEEDBACK[Math.floor(Math.random() * OFFLINE_FEEDBACK.length)];
+  return {
+    score,
+    feedback,
+    points: score,
+    tokens: Math.floor(score * 0.5),
+    fallback: true,
+  };
 }
 
 export async function onRequestPost(context) {
@@ -42,11 +61,7 @@ export async function onRequestPost(context) {
 
     const apiKey = context.env.OPENAI_API_KEY;
     if (!apiKey) {
-      const s = getDefaultScore();
-      return new Response(
-        JSON.stringify({ score: s, feedback: "Sistema de evaluacion temporalmente no disponible.", points: s, tokens: Math.floor(s * 0.5), fallback: true }),
-        { headers: corsHeaders }
-      );
+      return new Response(JSON.stringify(offlineResult()), { headers: corsHeaders });
     }
 
     const categoryPrompt = CATEGORY_PROMPTS[category] || CATEGORY_PROMPTS["codigo"];
@@ -86,11 +101,8 @@ Score: [0-100]/100. [1-2 oraciones de feedback constructivo en español]`;
     });
 
     if (!response.ok) {
-      const s = getDefaultScore();
-      return new Response(
-        JSON.stringify({ score: s, feedback: "Sistema de evaluacion temporalmente no disponible.", points: s, tokens: Math.floor(s * 0.5), fallback: true }),
-        { headers: corsHeaders }
-      );
+      // API error (billing, rate limit, etc) → offline mode
+      return new Response(JSON.stringify(offlineResult()), { headers: corsHeaders });
     }
 
     const data = await response.json();
@@ -100,13 +112,12 @@ Score: [0-100]/100. [1-2 oraciones de feedback constructivo en español]`;
     let feedback = text;
 
     if (score === -1) {
-      score = getDefaultScore();
-      feedback = "Sistema de evaluacion temporalmente no disponible.";
-    } else {
-      const feedbackMatch = text.match(/Score:\s*\d+\s*\/\s*100\.?\s*(.*)/i);
-      if (feedbackMatch && feedbackMatch[1]) {
-        feedback = feedbackMatch[1].trim();
-      }
+      return new Response(JSON.stringify(offlineResult()), { headers: corsHeaders });
+    }
+
+    const feedbackMatch = text.match(/Score:\s*\d+\s*\/\s*100\.?\s*(.*)/i);
+    if (feedbackMatch && feedbackMatch[1]) {
+      feedback = feedbackMatch[1].trim();
     }
 
     return new Response(
@@ -114,11 +125,7 @@ Score: [0-100]/100. [1-2 oraciones de feedback constructivo en español]`;
       { headers: corsHeaders }
     );
   } catch {
-    const s = getDefaultScore();
-    return new Response(
-      JSON.stringify({ score: s, feedback: "Sistema de evaluacion temporalmente no disponible.", points: s, tokens: Math.floor(s * 0.5), fallback: true }),
-      { headers: corsHeaders }
-    );
+    return new Response(JSON.stringify(offlineResult()), { headers: corsHeaders });
   }
 }
 
