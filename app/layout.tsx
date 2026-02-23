@@ -3,7 +3,7 @@ import type { Metadata, Viewport } from "next"
 import { Press_Start_2P } from "next/font/google"
 
 import "./globals.css"
-// import PrivyProviderWrapper from "@/components/privy-provider"
+import PrivyProviderWrapper from "@/components/privy-provider"
 
 const pressStart2P = Press_Start_2P({
   weight: "400",
@@ -37,7 +37,9 @@ export default function RootLayout({
         />
       </head>
       <body className={`${pressStart2P.variable} font-sans antialiased`}>
-        {children}
+        <PrivyProviderWrapper>
+          {children}
+        </PrivyProviderWrapper>
       </body>
     </html>
   )
