@@ -7,7 +7,6 @@ export default function PrivyProviderWrapper({ children }: { children: React.Rea
     <PrivyProvider
       appId="cmlz4955p00sb0cjpqc3rgnxj"
       config={{
-        loginMethods: ["email", "google"],
         appearance: {
           theme: "dark",
           accentColor: "#209cee",
