@@ -61,9 +61,24 @@ const MATH_CHALLENGES = [
   { question: "5 - 1 = ?", answer: "4", options: ["2", "3", "4", "5"] },
 ]
 
-const VOWELS = ["A", "E", "I", "O", "U"]
+// === ENCUENTRA LA VOCAL — tap the correct vowel from the row ===
+const ENCUENTRA_CHALLENGES = [
+  { letter: "A", emoji: "🅰️", color: "#ff6b6b" },
+  { letter: "E", emoji: "📧", color: "#4dc9f6" },
+  { letter: "I", emoji: "ℹ️", color: "#4cd964" },
+  { letter: "O", emoji: "⭕", color: "#ffcc00" },
+  { letter: "U", emoji: "🔮", color: "#c44dff" },
+  { letter: "A", emoji: "🅰️", color: "#ff6b6b" },
+  { letter: "E", emoji: "📧", color: "#4dc9f6" },
+  { letter: "I", emoji: "ℹ️", color: "#4cd964" },
+  { letter: "O", emoji: "⭕", color: "#ffcc00" },
+  { letter: "U", emoji: "🔮", color: "#c44dff" },
+]
 
-type GameType = "preschool" | "vowels" | "math"
+const VOWELS = ["A", "E", "I", "O", "U"]
+const VOWEL_COLORS: Record<string, string> = { A: "#ff6b6b", E: "#4dc9f6", I: "#4cd964", O: "#ffcc00", U: "#c44dff" }
+
+type GameType = "encuentra" | "preschool" | "vowels" | "math"
 
 function shuffle<T>(arr: T[]): T[] {
   const a = [...arr]
@@ -85,7 +100,8 @@ export function MiniGame({ petName, accentColor, onComplete, onClose }: MiniGame
   const [selectedAnswer, setSelectedAnswer] = useState<string | null>(null)
 
   const startGame = useCallback((type: GameType) => {
-    const pool = type === "preschool" ? PRESCHOOL_CHALLENGES
+    const pool = type === "encuentra" ? ENCUENTRA_CHALLENGES
+      : type === "preschool" ? PRESCHOOL_CHALLENGES
       : type === "vowels" ? VOWEL_CHALLENGES
       : MATH_CHALLENGES
     setChallenges(shuffle(pool).slice(0, 5))
@@ -151,6 +167,21 @@ export function MiniGame({ petName, accentColor, onComplete, onClose }: MiniGame
           <h2 style={{ fontSize: "14px", color: "#fff", marginBottom: "1.25rem" }}>
             🎮 Elige un juego
           </h2>
+
+          <button
+            onClick={() => startGame("encuentra")}
+            style={{
+              display: "block", width: "100%", padding: "14px",
+              background: "linear-gradient(135deg, #4cd964, #2ecc71)",
+              border: "none", borderRadius: "10px", color: "#fff",
+              fontSize: "13px", fontWeight: "bold", cursor: "pointer",
+              marginBottom: "10px",
+            }}
+          >
+            👆 Encuentra la Vocal
+            <br />
+            <span style={{ fontSize: "10px", opacity: 0.8 }}>Toca la vocal correcta</span>
+          </button>
 
           <button
             onClick={() => startGame("preschool")}
@@ -275,7 +306,7 @@ export function MiniGame({ petName, accentColor, onComplete, onClose }: MiniGame
 
   // ============ ACTIVE GAME ============
   const current = challenges[round]
-  const gameLabels = { preschool: "🔤 Letras", vowels: "📝 Vocales", math: "🔢 Mates" }
+  const gameLabels = { encuentra: "👆 Encuentra", preschool: "🔤 Letras", vowels: "📝 Vocales", math: "🔢 Mates" }
 
   return (
     <div style={{
@@ -361,14 +392,55 @@ export function MiniGame({ petName, accentColor, onComplete, onClose }: MiniGame
           </>
         )}
 
+        {/* === ENCUENTRA GAME === */}
+        {gameType === "encuentra" && (
+          <>
+            <p style={{ fontSize: "13px", color: "#aaa", marginBottom: "16px" }}>
+              ¡Encuentra la letra!
+            </p>
+            <p style={{
+              fontSize: "64px", fontWeight: "bold", marginBottom: "20px",
+              color: VOWEL_COLORS[current.letter] || "#fff",
+              textShadow: `0 0 20px ${VOWEL_COLORS[current.letter] || "#fff"}40`,
+              lineHeight: 1,
+            }}>
+              {current.letter}
+            </p>
+            <div style={{ display: "flex", gap: "10px", justifyContent: "center" }}>
+              {VOWELS.map(v => (
+                <button
+                  key={v}
+                  onClick={() => handleAnswer(v)}
+                  disabled={!!feedback}
+                  style={{
+                    width: "56px", height: "56px", borderRadius: "14px",
+                    border: `3px solid ${
+                      selectedAnswer === v
+                        ? (feedback?.correct ? "#4cd964" : "#ff6b6b")
+                        : VOWEL_COLORS[v] + "60"
+                    }`,
+                    background: selectedAnswer === v
+                      ? (feedback?.correct ? "rgba(76,217,100,0.25)" : "rgba(255,107,107,0.25)")
+                      : (v === current.letter && feedback && !feedback.correct)
+                        ? "rgba(76,217,100,0.15)"
+                        : "#0d0d1a",
+                    color: VOWEL_COLORS[v], fontSize: "24px", fontWeight: "bold",
+                    cursor: feedback ? "default" : "pointer",
+                    transition: "all 0.2s",
+                  }}
+                >
+                  {v}
+                </button>
+              ))}
+            </div>
+          </>
+        )}
+
         {/* === VOWELS GAME === */}
         {gameType === "vowels" && (
           <>
-            <p style={{ fontSize: "48px", marginBottom: "4px", lineHeight: 1 }}>
+            <p style={{ fontSize: "64px", marginBottom: "12px", lineHeight: 1 }}>
               {current.hint}
-            </p>
-            <p style={{ fontSize: "10px", color: "#aaa", marginBottom: "10px" }}>
-              {current.label}
             </p>
             <p style={{
               fontSize: "28px", color: "#fff", letterSpacing: "8px",
