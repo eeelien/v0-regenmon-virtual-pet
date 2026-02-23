@@ -24,6 +24,7 @@ import { ActivityFeed } from "@/components/activity-feed"
 import { useHub, type HubProfile } from "@/hooks/useHub"
 import { useHubSync } from "@/hooks/useHubSync"
 import { MiniGame } from "@/components/mini-game"
+import { FoodGame } from "@/components/food-game"
 
 interface PetScreenProps {
   data: RegenmonData
@@ -48,6 +49,7 @@ export function PetScreen({ data, onUpdate, onReset }: PetScreenProps) {
   const [memories, setMemories] = useState<Memory[]>([])
   const [hubRegistered, setHubRegistered] = useState(false)
   const [showMiniGame, setShowMiniGame] = useState(false)
+  const [showFoodGame, setShowFoodGame] = useState(false)
   const [leaderboard, setLeaderboard] = useState<HubProfile[]>([])
   const floating = useFloatingText()
   const { getLeaderboard } = useHub()
@@ -91,20 +93,25 @@ export function PetScreen({ data, onUpdate, onReset }: PetScreenProps) {
   }
 
   function handleFeed() {
-    const hungerDelta = Math.min(15, 100 - data.hunger)
-    const energyDelta = Math.min(5, 100 - data.energy)
+    setShowFoodGame(true)
+  }
+
+  function handleFoodGameComplete(score: number) {
+    setShowFoodGame(false)
+    const hungerBonus = score * 5
+    const happyBonus = score * 2
     const updated: RegenmonData = {
       ...data,
-      hunger: clamp(data.hunger + 15, 0, 100),
-      energy: clamp(data.energy + 5, 0, 100),
+      hunger: clamp(data.hunger + hungerBonus, 0, 100),
+      happiness: clamp(data.happiness + happyBonus, 0, 100),
     }
     saveRegenmon(updated)
     onUpdate(updated)
-    showFeedback("Mmmm... delicioso!")
+    showFeedback(`¡${data.name} comió saludable!`)
     setMoodOverride("eating")
     setTimeout(() => setMoodOverride(undefined), 2000)
-    if (hungerDelta > 0) spawnStatChange("Hambre", hungerDelta, "#209cee")
-    if (energyDelta > 0) setTimeout(() => spawnStatChange("Energia", energyDelta, "#ffdd57"), 300)
+    if (hungerBonus > 0) spawnStatChange("Hambre", hungerBonus, "#209cee")
+    if (happyBonus > 0) setTimeout(() => spawnStatChange("Felicidad", happyBonus, "#ff6b9d"), 300)
   }
 
   function handlePlay() {
@@ -554,6 +561,15 @@ export function PetScreen({ data, onUpdate, onReset }: PetScreenProps) {
           accentColor={config.colorHex}
           onComplete={handleMiniGameComplete}
           onClose={() => setShowMiniGame(false)}
+        />
+      )}
+      {/* Food Game */}
+      {showFoodGame && (
+        <FoodGame
+          petName={data.name}
+          accentColor={config.colorHex}
+          onComplete={handleFoodGameComplete}
+          onClose={() => setShowFoodGame(false)}
         />
       )}
     </main>
