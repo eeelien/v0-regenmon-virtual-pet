@@ -128,7 +128,7 @@ export function PetScreen({ data, onUpdate, onReset }: PetScreenProps) {
     setTimeout(() => spawnStatChange("Felicidad", -5, "#ff6b6b"), 300)
   }
 
-  const CHAT_API_URL = "https://v0-regenmon-virtual-pet-three.vercel.app/api/demo/chat"
+  const CHAT_API_URL = "/api/chat"
 
   async function handleChatSend(text: string) {
     const userMsg: ChatMessage = {
