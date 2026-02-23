@@ -285,3 +285,73 @@ body {
 ::-webkit-scrollbar { width: 6px; }
 ::-webkit-scrollbar-track { background: #0d1117; }
 ::-webkit-scrollbar-thumb { background: #30363d; }
+
+/* --- Tab buttons --- */
+.tab-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 10px 12px;
+  background: #161b22;
+  border: 3px solid #30363d;
+  cursor: pointer;
+  font-family: var(--font-press-start), "Press Start 2P", cursive;
+  font-size: 9px;
+  color: #484f58;
+  transition: all 0.15s;
+}
+
+.tab-btn:hover {
+  background: #1c2129;
+  color: #8b949e;
+}
+
+.tab-btn-active {
+  background: #1c2129;
+  border-bottom: 3px solid currentColor;
+}
+
+/* --- Training category buttons --- */
+.training-category-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 14px 8px;
+  background: #161b22;
+  border: 3px solid #30363d;
+  cursor: pointer;
+  font-family: var(--font-press-start), "Press Start 2P", cursive;
+  color: #8b949e;
+  transition: all 0.15s;
+  text-align: center;
+}
+
+.training-category-btn:hover {
+  background: #1c2129;
+  border-color: #484f58;
+}
+
+.training-category-selected {
+  border-color: #ff9800 !important;
+  background: rgba(255, 152, 0, 0.06) !important;
+  color: #ff9800 !important;
+  box-shadow: 0 0 12px rgba(255, 152, 0, 0.2);
+}
+
+/* --- Result score backgrounds --- */
+.result-bg-gold {
+  border-color: #ff9800 !important;
+  background: rgba(255, 152, 0, 0.08) !important;
+}
+
+.result-bg-yellow {
+  border-color: #ffdd57 !important;
+  background: rgba(255, 221, 87, 0.08) !important;
+}
+
+.result-bg-red {
+  border-color: #ff6b6b !important;
+  background: rgba(255, 107, 107, 0.08) !important;
+}

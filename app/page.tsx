@@ -25,6 +25,10 @@ export default function Page() {
       energy: 50,
       hunger: 50,
       createdAt: new Date().toISOString(),
+      totalPoints: 0,
+      stage: 1,
+      balance: 0,
+      trainingHistory: [],
     }
     saveRegenmon(newPet)
     setRegenmon(newPet)

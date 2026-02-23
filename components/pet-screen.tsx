@@ -3,7 +3,13 @@
 import { useState, useCallback, useEffect } from "react"
 import Image from "next/image"
 import type { RegenmonData } from "@/lib/regenmon"
-import { TYPE_CONFIG, saveRegenmon } from "@/lib/regenmon"
+import {
+  TYPE_CONFIG,
+  saveRegenmon,
+  STAGE_ICONS,
+  STAGE_LABELS,
+  getNextEvolutionPoints,
+} from "@/lib/regenmon"
 import { loadMemories, extractMemories, addMemory } from "@/lib/memory"
 import type { Memory } from "@/lib/memory"
 import { generatePetResponse } from "@/lib/chat"
@@ -11,6 +17,7 @@ import { StatBar } from "@/components/stat-bar"
 import { ChatContainer, type ChatMessage } from "@/components/chat-bubble"
 import { MemoryIndicator } from "@/components/memory-indicator"
 import { FloatingTextLayer, useFloatingText } from "@/components/floating-text"
+import { TrainingScreen } from "@/components/training-screen"
 
 interface PetScreenProps {
   data: RegenmonData
@@ -18,9 +25,12 @@ interface PetScreenProps {
   onReset: () => void
 }
 
+type Tab = "mascota" | "entrenar"
+
 let msgId = 0
 
 export function PetScreen({ data, onUpdate, onReset }: PetScreenProps) {
+  const [activeTab, setActiveTab] = useState<Tab>("mascota")
   const [showConfirm, setShowConfirm] = useState(false)
   const [actionFeedback, setActionFeedback] = useState<string | null>(null)
   const [isAnimating, setIsAnimating] = useState(false)
@@ -106,7 +116,6 @@ export function PetScreen({ data, onUpdate, onReset }: PetScreenProps) {
       timestamp: Date.now(),
     }
 
-    // Extract and save memories from user message
     const extracted = extractMemories(text)
     let currentMemories = memories
     for (const mem of extracted) {
@@ -116,7 +125,6 @@ export function PetScreen({ data, onUpdate, onReset }: PetScreenProps) {
       setMemories(currentMemories)
     }
 
-    // Generate pet response using memories
     const responseText = generatePetResponse(text, data, currentMemories)
     const petMsg: ChatMessage = {
       id: ++msgId,
@@ -129,6 +137,7 @@ export function PetScreen({ data, onUpdate, onReset }: PetScreenProps) {
   }
 
   const mood = data.happiness > 70 ? "Feliz" : data.happiness > 40 ? "Normal" : "Triste"
+  const nextEvoPts = getNextEvolutionPoints(data.stage)
 
   return (
     <main className="min-h-screen flex flex-col items-center px-4 py-6 gap-5">
@@ -138,7 +147,7 @@ export function PetScreen({ data, onUpdate, onReset }: PetScreenProps) {
       <header className="w-full max-w-lg flex items-center justify-between animate-slide-up">
         <div className="flex items-center gap-3">
           <h1 className="text-xs" style={{ color: config.colorHex }}>
-            {"🥚 Regenmon"}
+            {"\u{1F95A} Regenmon"}
           </h1>
           <MemoryIndicator memories={memories} color={config.colorHex} />
         </div>
@@ -152,135 +161,197 @@ export function PetScreen({ data, onUpdate, onReset }: PetScreenProps) {
         </button>
       </header>
 
+      {/* Tabs */}
+      <nav className="w-full max-w-lg animate-slide-up" style={{ animationDelay: "0.02s" }}>
+        <div className="grid grid-cols-2 gap-0">
+          <button
+            type="button"
+            className={`tab-btn ${activeTab === "mascota" ? "tab-btn-active" : ""}`}
+            style={activeTab === "mascota" ? { borderColor: config.colorHex, color: config.colorHex } : {}}
+            onClick={() => setActiveTab("mascota")}
+          >
+            {"\u{1F3E0} Mascota"}
+          </button>
+          <button
+            type="button"
+            className={`tab-btn ${activeTab === "entrenar" ? "tab-btn-active" : ""}`}
+            style={activeTab === "entrenar" ? { borderColor: "#ff9800", color: "#ff9800" } : {}}
+            onClick={() => setActiveTab("entrenar")}
+          >
+            {"\u{1F393} Entrenar"}
+          </button>
+        </div>
+      </nav>
+
       <div className="w-full max-w-lg flex flex-col gap-5">
-        {/* Pet display */}
-        <div className="nes-container is-rounded flex flex-col items-center gap-4 animate-slide-up" style={{ animationDelay: "0.05s" }}>
-          {/* Name + mood */}
-          <div className="flex flex-col items-center gap-2">
-            <h2 className="text-sm" style={{ color: config.colorHex }}>
-              {data.name}
-            </h2>
-            <div className="flex items-center gap-3">
-              <span className="text-[9px]" style={{ color: "#484f58" }}>
-                {config.emoji} {config.label}
-              </span>
-              <span
-                className="nes-badge"
-                style={{ display: "inline-block" }}
-              >
-                <span
-                  className={data.happiness > 70 ? "is-success" : data.happiness > 40 ? "is-primary" : "is-error"}
-                  style={{ fontSize: "8px", padding: "2px 8px" }}
-                >
-                  {mood}
-                </span>
-              </span>
-            </div>
-          </div>
+        {activeTab === "mascota" ? (
+          <>
+            {/* Pet display */}
+            <div className="nes-container is-rounded flex flex-col items-center gap-4 animate-slide-up" style={{ animationDelay: "0.05s" }}>
+              {/* Name + mood */}
+              <div className="flex flex-col items-center gap-2">
+                <h2 className="text-sm" style={{ color: config.colorHex }}>
+                  {data.name}
+                </h2>
+                <div className="flex items-center gap-3">
+                  <span className="text-[9px]" style={{ color: "#484f58" }}>
+                    {config.emoji} {config.label}
+                  </span>
+                  <span
+                    className="nes-badge"
+                    style={{ display: "inline-block" }}
+                  >
+                    <span
+                      className={data.happiness > 70 ? "is-success" : data.happiness > 40 ? "is-primary" : "is-error"}
+                      style={{ fontSize: "8px", padding: "2px 8px" }}
+                    >
+                      {mood}
+                    </span>
+                  </span>
+                </div>
+              </div>
 
-          {/* Pet image */}
-          <div className="relative">
-            <div
-              className="absolute inset-0 opacity-20 blur-xl"
-              style={{ background: config.colorHex }}
-            />
-            <div className={`relative ${isAnimating ? "animate-wiggle" : "animate-float"}`}>
-              <div className="pet-frame" style={{ borderColor: `${config.colorHex}60` }}>
-                <Image
-                  src={config.image}
-                  alt={`Tu Regenmon ${data.name}, tipo ${config.label}`}
-                  width={160}
-                  height={160}
-                  className="block"
-                  style={{ imageRendering: "pixelated" }}
-                  priority
+              {/* Pet image */}
+              <div className="relative">
+                <div
+                  className="absolute inset-0 opacity-20 blur-xl"
+                  style={{ background: config.colorHex }}
                 />
+                <div className={`relative ${isAnimating ? "animate-wiggle" : "animate-float"}`}>
+                  <div className="pet-frame" style={{ borderColor: `${config.colorHex}60` }}>
+                    <Image
+                      src={config.image}
+                      alt={`Tu Regenmon ${data.name}, tipo ${config.label}`}
+                      width={160}
+                      height={160}
+                      className="block"
+                      style={{ imageRendering: "pixelated" }}
+                      priority
+                    />
+                  </div>
+                </div>
+
+                {/* Feedback bubble */}
+                {actionFeedback && (
+                  <div className="nes-balloon from-left absolute -top-14 left-1/2 -translate-x-1/2 animate-pop-in whitespace-nowrap"
+                    style={{
+                      fontSize: "9px",
+                      padding: "4px 12px",
+                      color: "#0d1117",
+                      background: config.colorHex,
+                      borderColor: config.colorHex,
+                      zIndex: 10,
+                    }}
+                  >
+                    <p>{actionFeedback}</p>
+                  </div>
+                )}
+              </div>
+
+              {/* Evolution / Points bar under pet */}
+              <div className="w-full flex flex-col gap-2">
+                <div className="flex justify-between text-[8px]" style={{ color: "#8b949e" }}>
+                  <span>
+                    {STAGE_ICONS[data.stage]}{" "}{STAGE_LABELS[data.stage]}{" (Etapa "}{data.stage}{"/3)"}
+                  </span>
+                  <span>
+                    {"\u{1F34E} "}{data.balance}{" $FRUTA"}
+                  </span>
+                </div>
+                {nextEvoPts != null && (
+                  <>
+                    <div className="stat-track">
+                      <div
+                        className="stat-fill"
+                        style={{
+                          width: `${Math.min(100, (data.totalPoints / nextEvoPts) * 100)}%`,
+                          background: config.colorHex,
+                        }}
+                      />
+                    </div>
+                    <p className="text-[7px] text-center" style={{ color: "#484f58" }}>
+                      {data.totalPoints}{"/"}{nextEvoPts}{" pts para evolucionar"}
+                    </p>
+                  </>
+                )}
+                {nextEvoPts == null && (
+                  <p className="text-[8px] text-center" style={{ color: "#ffdd57" }}>
+                    {"\u{1F451} Evolucion maxima alcanzada! "}{data.totalPoints}{" pts"}
+                  </p>
+                )}
               </div>
             </div>
 
-            {/* Feedback bubble */}
-            {actionFeedback && (
-              <div className="nes-balloon from-left absolute -top-14 left-1/2 -translate-x-1/2 animate-pop-in whitespace-nowrap"
-                style={{
-                  fontSize: "9px",
-                  padding: "4px 12px",
-                  color: "#0d1117",
-                  background: config.colorHex,
-                  borderColor: config.colorHex,
-                  zIndex: 10,
-                }}
-              >
-                <p>{actionFeedback}</p>
+            {/* Action buttons */}
+            <div className="nes-container is-rounded animate-slide-up" style={{ animationDelay: "0.1s" }}>
+              <p className="text-[9px] mb-3" style={{ color: "#484f58" }}>
+                {"Acciones"}
+              </p>
+              <div className="grid grid-cols-3 gap-3">
+                <button
+                  type="button"
+                  className="action-btn action-btn-green"
+                  onClick={handleFeed}
+                  aria-label="Alimentar a tu Regenmon"
+                >
+                  <span className="text-xl" aria-hidden="true">{"\u{1F34E}"}</span>
+                  <span>{"Alimentar"}</span>
+                </button>
+                <button
+                  type="button"
+                  className="action-btn action-btn-blue"
+                  onClick={handlePlay}
+                  aria-label="Jugar con tu Regenmon"
+                >
+                  <span className="text-xl" aria-hidden="true">{"\u{1F3AE}"}</span>
+                  <span>{"Jugar"}</span>
+                </button>
+                <button
+                  type="button"
+                  className="action-btn action-btn-yellow"
+                  onClick={handleSleep}
+                  aria-label="Descansar a tu Regenmon"
+                >
+                  <span className="text-xl" aria-hidden="true">{"\u{1F4A4}"}</span>
+                  <span>{"Descansar"}</span>
+                </button>
               </div>
-            )}
-          </div>
-        </div>
+            </div>
 
-        {/* Action buttons */}
-        <div className="nes-container is-rounded animate-slide-up" style={{ animationDelay: "0.1s" }}>
-          <p className="text-[9px] mb-3" style={{ color: "#484f58" }}>
-            {"Acciones"}
-          </p>
-          <div className="grid grid-cols-3 gap-3">
-            <button
-              type="button"
-              className="action-btn action-btn-green"
-              onClick={handleFeed}
-              aria-label="Alimentar a tu Regenmon"
-            >
-              <span className="text-xl" aria-hidden="true">{"🍎"}</span>
-              <span>{"Alimentar"}</span>
-            </button>
-            <button
-              type="button"
-              className="action-btn action-btn-blue"
-              onClick={handlePlay}
-              aria-label="Jugar con tu Regenmon"
-            >
-              <span className="text-xl" aria-hidden="true">{"🎮"}</span>
-              <span>{"Jugar"}</span>
-            </button>
-            <button
-              type="button"
-              className="action-btn action-btn-yellow"
-              onClick={handleSleep}
-              aria-label="Descansar a tu Regenmon"
-            >
-              <span className="text-xl" aria-hidden="true">{"💤"}</span>
-              <span>{"Descansar"}</span>
-            </button>
-          </div>
-        </div>
+            {/* Stats */}
+            <div className="nes-container is-rounded animate-slide-up" style={{ animationDelay: "0.15s" }}>
+              <p className="text-[9px] mb-4" style={{ color: "#484f58" }}>
+                {"Estadisticas"}
+              </p>
+              <div className="flex flex-col gap-4">
+                <StatBar label="Felicidad" value={data.happiness} max={100} colorClass="stat-fill-green" icon={"\u{1F49A}"} />
+                <StatBar label="Energia" value={data.energy} max={100} colorClass="stat-fill-yellow" icon={"\u26A1"} />
+                <StatBar label="Hambre" value={data.hunger} max={100} colorClass="stat-fill-red" icon={"\u{1F34E}"} />
+              </div>
+            </div>
 
-        {/* Stats */}
-        <div className="nes-container is-rounded animate-slide-up" style={{ animationDelay: "0.15s" }}>
-          <p className="text-[9px] mb-4" style={{ color: "#484f58" }}>
-            {"Estadisticas"}
-          </p>
-          <div className="flex flex-col gap-4">
-            <StatBar label="Felicidad" value={data.happiness} max={100} colorClass="stat-fill-green" icon="💚" />
-            <StatBar label="Energia" value={data.energy} max={100} colorClass="stat-fill-yellow" icon="⚡" />
-            <StatBar label="Hambre" value={data.hunger} max={100} colorClass="stat-fill-red" icon="🍎" />
-          </div>
-        </div>
+            {/* Chat */}
+            <ChatContainer
+              messages={messages}
+              petColor={config.colorHex}
+              onSend={handleChatSend}
+              petName={data.name}
+            />
 
-        {/* Chat */}
-        <ChatContainer
-          messages={messages}
-          petColor={config.colorHex}
-          onSend={handleChatSend}
-          petName={data.name}
-        />
-
-        {/* Created date */}
-        <p className="text-center text-[9px] pb-4" style={{ color: "#30363d" }}>
-          {"Creado el "}
-          {new Date(data.createdAt).toLocaleDateString("es-ES", {
-            day: "numeric",
-            month: "long",
-            year: "numeric",
-          })}
-        </p>
+            {/* Created date */}
+            <p className="text-center text-[9px] pb-4" style={{ color: "#30363d" }}>
+              {"Creado el "}
+              {new Date(data.createdAt).toLocaleDateString("es-ES", {
+                day: "numeric",
+                month: "long",
+                year: "numeric",
+              })}
+            </p>
+          </>
+        ) : (
+          /* Training tab */
+          <TrainingScreen data={data} onUpdate={onUpdate} accentColor={config.colorHex} />
+        )}
       </div>
 
       {/* Confirmation dialog */}

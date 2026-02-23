@@ -1,5 +1,11 @@
 export type RegenmonType = "semilla" | "gota" | "chispa"
 
+export interface TrainingEntry {
+  score: number
+  category: string
+  timestamp: string
+}
+
 export interface RegenmonData {
   name: string
   type: RegenmonType
@@ -7,6 +13,33 @@ export interface RegenmonData {
   energy: number
   hunger: number
   createdAt: string
+  totalPoints: number
+  stage: 1 | 2 | 3
+  balance: number
+  trainingHistory: TrainingEntry[]
+}
+
+export const EVOLUTION_THRESHOLDS = [0, 500, 1500] as const
+export const STAGE_LABELS: Record<number, string> = {
+  1: "Bebe",
+  2: "Joven",
+  3: "Adulto",
+}
+export const STAGE_ICONS: Record<number, string> = {
+  1: "\u{1F95A}",
+  2: "\u{1F423}",
+  3: "\u{1F409}",
+}
+
+export function getNextEvolutionPoints(stage: 1 | 2 | 3): number | null {
+  if (stage >= 3) return null
+  return EVOLUTION_THRESHOLDS[stage]
+}
+
+export function checkEvolution(totalPoints: number, currentStage: 1 | 2 | 3): 1 | 2 | 3 {
+  if (totalPoints >= 1500) return 3
+  if (totalPoints >= 500) return 2
+  return currentStage
 }
 
 export const TYPE_CONFIG: Record<
@@ -53,7 +86,15 @@ export function loadRegenmon(): RegenmonData | null {
   const raw = localStorage.getItem(STORAGE_KEY)
   if (!raw) return null
   try {
-    return JSON.parse(raw) as RegenmonData
+    const parsed = JSON.parse(raw)
+    // Migrate old data without training fields
+    return {
+      totalPoints: 0,
+      stage: 1,
+      balance: 0,
+      trainingHistory: [],
+      ...parsed,
+    } as RegenmonData
   } catch {
     return null
   }
