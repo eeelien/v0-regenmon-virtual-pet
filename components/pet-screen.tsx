@@ -23,6 +23,7 @@ import { RegisterHub } from "@/components/register-hub"
 import { ActivityFeed } from "@/components/activity-feed"
 import { useHub, type HubProfile } from "@/hooks/useHub"
 import { useHubSync } from "@/hooks/useHubSync"
+import { MiniGame } from "@/components/mini-game"
 
 interface PetScreenProps {
   data: RegenmonData
@@ -46,6 +47,7 @@ export function PetScreen({ data, onUpdate, onReset }: PetScreenProps) {
   const [messages, setMessages] = useState<ChatMessage[]>([])
   const [memories, setMemories] = useState<Memory[]>([])
   const [hubRegistered, setHubRegistered] = useState(false)
+  const [showMiniGame, setShowMiniGame] = useState(false)
   const [leaderboard, setLeaderboard] = useState<HubProfile[]>([])
   const floating = useFloatingText()
   const { getLeaderboard } = useHub()
@@ -106,18 +108,23 @@ export function PetScreen({ data, onUpdate, onReset }: PetScreenProps) {
   }
 
   function handlePlay() {
-    const happinessDelta = Math.min(15, 100 - data.happiness)
+    setShowMiniGame(true)
+  }
+
+  function handleMiniGameComplete(score: number) {
+    const happinessGain = score * 3
     const updated: RegenmonData = {
       ...data,
-      happiness: clamp(data.happiness + 15, 0, 100),
-      energy: clamp(data.energy - 10, 0, 100),
-      hunger: clamp(data.hunger - 5, 0, 100),
+      happiness: clamp(data.happiness + happinessGain, 0, 100),
+      energy: clamp(data.energy - 5, 0, 100),
     }
     saveRegenmon(updated)
     onUpdate(updated)
-    showFeedback("Que divertido!")
-    if (happinessDelta > 0) spawnStatChange("Felicidad", happinessDelta, "#4cd964")
-    setTimeout(() => spawnStatChange("Energia", -10, "#ff6b6b"), 300)
+    setShowMiniGame(false)
+    if (happinessGain > 0) {
+      showFeedback(`+${happinessGain} felicidad!`)
+      spawnStatChange("Felicidad", happinessGain, "#4cd964")
+    }
   }
 
   function handleSleep() {
@@ -539,6 +546,15 @@ export function PetScreen({ data, onUpdate, onReset }: PetScreenProps) {
             </div>
           </div>
         </div>
+      )}
+      {/* Mini Game */}
+      {showMiniGame && (
+        <MiniGame
+          petName={data.name}
+          accentColor={config.colorHex}
+          onComplete={handleMiniGameComplete}
+          onClose={() => setShowMiniGame(false)}
+        />
       )}
     </main>
   )
