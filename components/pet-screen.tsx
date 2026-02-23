@@ -430,7 +430,7 @@ export function PetScreen({ data, onUpdate, onReset }: PetScreenProps) {
                   <p className="text-[9px] mb-3" style={{ color: "#484f58" }}>🏆 Leaderboard</p>
                   {leaderboard.length === 0 ? (
                     <p className="text-[8px]" style={{ color: "#8b949e" }}>
-                      No hay Regenmons registrados aún — o el HUB no está disponible.
+                      🎉 Eres el primero en La Red! Pronto verás otros Regenmons aquí.
                     </p>
                   ) : (
                     <div className="flex flex-col gap-2">
