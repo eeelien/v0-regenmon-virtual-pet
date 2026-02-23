@@ -58,7 +58,7 @@ export const TYPE_CONFIG: Record<
     emoji: "\u{1F331}",
     color: "is-success",
     colorHex: "#4cd964",
-    image: "/regenmon-semilla.jpg",
+    image: "/regenmon-semilla-new.webp",
     description: "Naturaleza y vida",
   },
   gota: {
@@ -66,7 +66,7 @@ export const TYPE_CONFIG: Record<
     emoji: "\u{1F4A7}",
     color: "is-primary",
     colorHex: "#209cee",
-    image: "/regenmon-gota.jpg",
+    image: "/regenmon-gota-astro.webp",
     description: "Agua y serenidad",
   },
   chispa: {
