@@ -1,6 +1,6 @@
 "use client"
 
-const HUB_URL = "https://regenmon-final.vercel.app"
+const HUB_URL = ""  // local CF Pages Functions
 
 export interface HubProfile {
   id: string
