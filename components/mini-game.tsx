@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useCallback } from "react"
+import { useState, useCallback } from "react"
 
 interface MiniGameProps {
   petName: string
@@ -9,25 +9,45 @@ interface MiniGameProps {
   onClose: () => void
 }
 
-// Vocabulary challenges
-const VOWEL_CHALLENGES = [
-  { word: "G_TO", answer: "A", hint: "🐱 Animal que maúlla" },
-  { word: "P_RRO", answer: "E", hint: "🐶 Mejor amigo del humano" },
-  { word: "S_L", answer: "O", hint: "☀️ Brilla en el cielo" },
-  { word: "L_NA", answer: "U", hint: "🌙 Sale de noche" },
-  { word: "P_Z", answer: "E", hint: "🐟 Vive en el agua" },
-  { word: "FL_R", answer: "O", hint: "🌸 Crece en el jardín" },
-  { word: "C_SA", answer: "A", hint: "🏠 Donde vives" },
-  { word: "L_BRO", answer: "I", hint: "📖 Lo lees" },
-  { word: "N_BE", answer: "U", hint: "☁️ Está en el cielo" },
-  { word: "M_SA", answer: "E", hint: "🪑 Donde comes" },
-  { word: "_ GUA", answer: "A", hint: "💧 La bebes" },
-  { word: "H_ EVO", answer: "U", hint: "🥚 Sale del cascarón" },
-  { word: "R_SA", answer: "O", hint: "🌹 Flor con espinas" },
-  { word: "T_ GRE", answer: "I", hint: "🐯 Felino con rayas" },
-  { word: "_ SO", answer: "O", hint: "🐻 Animal grande y peludo" },
+// === LEVEL 1: PREESCOLAR — just match the letter to the image ===
+const PRESCHOOL_CHALLENGES = [
+  { letter: "A", image: "🌊", word: "Agua", sound: "Aaaa" },
+  { letter: "E", image: "⭐", word: "Estrella", sound: "Eeee" },
+  { letter: "I", image: "🏝️", word: "Isla", sound: "Iiii" },
+  { letter: "O", image: "👁️", word: "Ojo", sound: "Oooo" },
+  { letter: "U", image: "🍇", word: "Uva", sound: "Uuuu" },
+  { letter: "A", image: "🐝", word: "Abeja", sound: "Aaaa" },
+  { letter: "E", image: "🐘", word: "Elefante", sound: "Eeee" },
+  { letter: "I", image: "🧲", word: "Imán", sound: "Iiii" },
+  { letter: "O", image: "🐻", word: "Oso", sound: "Oooo" },
+  { letter: "U", image: "🦄", word: "Unicornio", sound: "Uuuu" },
+  { letter: "A", image: "🌳", word: "Árbol", sound: "Aaaa" },
+  { letter: "E", image: "🦔", word: "Erizo", sound: "Eeee" },
+  { letter: "I", image: "⛪", word: "Iglesia", sound: "Iiii" },
+  { letter: "O", image: "🍊", word: "Orange", sound: "Oooo" },
+  { letter: "U", image: "🔮", word: "Uno", sound: "Uuuu" },
 ]
 
+// === LEVEL 2: VOCALES — complete the word (with image hint) ===
+const VOWEL_CHALLENGES = [
+  { word: "G_TO", answer: "A", hint: "🐱", label: "Gato" },
+  { word: "P_RRO", answer: "E", hint: "🐶", label: "Perro" },
+  { word: "S_L", answer: "O", hint: "☀️", label: "Sol" },
+  { word: "L_NA", answer: "U", hint: "🌙", label: "Luna" },
+  { word: "P_Z", answer: "E", hint: "🐟", label: "Pez" },
+  { word: "FL_R", answer: "O", hint: "🌸", label: "Flor" },
+  { word: "C_SA", answer: "A", hint: "🏠", label: "Casa" },
+  { word: "L_BRO", answer: "I", hint: "📖", label: "Libro" },
+  { word: "N_BE", answer: "U", hint: "☁️", label: "Nube" },
+  { word: "M_SA", answer: "E", hint: "🪑", label: "Mesa" },
+  { word: "_GUA", answer: "A", hint: "💧", label: "Agua" },
+  { word: "H_EVO", answer: "U", hint: "🥚", label: "Huevo" },
+  { word: "R_SA", answer: "O", hint: "🌹", label: "Rosa" },
+  { word: "T_GRE", answer: "I", hint: "🐯", label: "Tigre" },
+  { word: "_SO", answer: "O", hint: "🐻", label: "Oso" },
+]
+
+// === LEVEL 3: MATH ===
 const MATH_CHALLENGES = [
   { question: "2 + 3 = ?", answer: "5", options: ["4", "5", "6", "7"] },
   { question: "7 - 2 = ?", answer: "5", options: ["3", "4", "5", "6"] },
@@ -43,7 +63,16 @@ const MATH_CHALLENGES = [
 
 const VOWELS = ["A", "E", "I", "O", "U"]
 
-type GameType = "vowels" | "math"
+type GameType = "preschool" | "vowels" | "math"
+
+function shuffle<T>(arr: T[]): T[] {
+  const a = [...arr]
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]]
+  }
+  return a
+}
 
 export function MiniGame({ petName, accentColor, onComplete, onClose }: MiniGameProps) {
   const [gameType, setGameType] = useState<GameType | null>(null)
@@ -55,15 +84,11 @@ export function MiniGame({ petName, accentColor, onComplete, onClose }: MiniGame
   const [gameOver, setGameOver] = useState(false)
   const [selectedAnswer, setSelectedAnswer] = useState<string | null>(null)
 
-  // Shuffle and pick challenges
   const startGame = useCallback((type: GameType) => {
-    const pool = type === "vowels" ? [...VOWEL_CHALLENGES] : [...MATH_CHALLENGES]
-    // Fisher-Yates shuffle
-    for (let i = pool.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [pool[i], pool[j]] = [pool[j], pool[i]]
-    }
-    setChallenges(pool.slice(0, 5))
+    const pool = type === "preschool" ? PRESCHOOL_CHALLENGES
+      : type === "vowels" ? VOWEL_CHALLENGES
+      : MATH_CHALLENGES
+    setChallenges(shuffle(pool).slice(0, 5))
     setGameType(type)
     setRound(0)
     setScore(0)
@@ -72,18 +97,27 @@ export function MiniGame({ petName, accentColor, onComplete, onClose }: MiniGame
     setSelectedAnswer(null)
   }, [])
 
+  const handleExit = useCallback(() => {
+    if (score > 0) {
+      onComplete(score)
+    } else {
+      onClose()
+    }
+  }, [score, onComplete, onClose])
+
   const handleAnswer = useCallback((answer: string) => {
     if (feedback || gameOver) return
-    
+
     const current = challenges[round]
-    const correct = answer === current.answer
+    const correctAnswer = current.answer || current.letter
+    const correct = answer === correctAnswer
     setSelectedAnswer(answer)
-    
+
     if (correct) {
       setScore(s => s + 1)
       setFeedback({ correct: true, text: "¡Correcto! 🎉" })
     } else {
-      setFeedback({ correct: false, text: `Era "${current.answer}" 😅` })
+      setFeedback({ correct: false, text: `Era "${correctAnswer}" 😅` })
     }
 
     setTimeout(() => {
@@ -97,7 +131,7 @@ export function MiniGame({ petName, accentColor, onComplete, onClose }: MiniGame
     }, 1200)
   }, [feedback, gameOver, challenges, round, totalRounds])
 
-  // Game selection screen
+  // ============ GAME SELECTION ============
   if (!gameType) {
     return (
       <div style={{
@@ -117,7 +151,22 @@ export function MiniGame({ petName, accentColor, onComplete, onClose }: MiniGame
           <h2 style={{ fontSize: "14px", color: "#fff", marginBottom: "1.25rem" }}>
             🎮 Elige un juego
           </h2>
-          
+
+          <button
+            onClick={() => startGame("preschool")}
+            style={{
+              display: "block", width: "100%", padding: "14px",
+              background: "linear-gradient(135deg, #ffb347, #ff6b6b)",
+              border: "none", borderRadius: "10px", color: "#fff",
+              fontSize: "13px", fontWeight: "bold", cursor: "pointer",
+              marginBottom: "10px",
+            }}
+          >
+            🔤 Mis Primeras Letras
+            <br />
+            <span style={{ fontSize: "10px", opacity: 0.8 }}>Aprende las vocales con dibujos</span>
+          </button>
+
           <button
             onClick={() => startGame("vowels")}
             style={{
@@ -128,9 +177,9 @@ export function MiniGame({ petName, accentColor, onComplete, onClose }: MiniGame
               marginBottom: "10px",
             }}
           >
-            📝 Vocales
+            📝 Completa la Palabra
             <br />
-            <span style={{ fontSize: "10px", opacity: 0.8 }}>Completa la palabra</span>
+            <span style={{ fontSize: "10px", opacity: 0.8 }}>¿Qué vocal falta?</span>
           </button>
 
           <button
@@ -163,7 +212,7 @@ export function MiniGame({ petName, accentColor, onComplete, onClose }: MiniGame
     )
   }
 
-  // Game over screen
+  // ============ GAME OVER ============
   if (gameOver) {
     const stars = score >= 4 ? 3 : score >= 3 ? 2 : score >= 1 ? 1 : 0
     const messages = [
@@ -209,9 +258,7 @@ export function MiniGame({ petName, accentColor, onComplete, onClose }: MiniGame
             🔄 Jugar de nuevo
           </button>
           <button
-            onClick={() => {
-              onComplete(score)
-            }}
+            onClick={() => onComplete(score)}
             style={{
               display: "block", width: "100%", padding: "12px",
               background: "none", border: `1px solid ${accentColor}`,
@@ -226,8 +273,9 @@ export function MiniGame({ petName, accentColor, onComplete, onClose }: MiniGame
     )
   }
 
-  // Active game
+  // ============ ACTIVE GAME ============
   const current = challenges[round]
+  const gameLabels = { preschool: "🔤 Letras", vowels: "📝 Vocales", math: "🔢 Mates" }
 
   return (
     <div style={{
@@ -243,7 +291,7 @@ export function MiniGame({ petName, accentColor, onComplete, onClose }: MiniGame
         width: "100%", maxWidth: "340px", marginBottom: "1rem",
       }}>
         <span style={{ fontSize: "11px", color: "#aaa" }}>
-          {gameType === "vowels" ? "📝 Vocales" : "🔢 Mates"} | Ronda {round + 1}/{totalRounds}
+          {gameLabels[gameType]} | Ronda {round + 1}/{totalRounds}
         </span>
         <span style={{ fontSize: "11px", color: accentColor }}>
           ⭐ {score}
@@ -266,14 +314,61 @@ export function MiniGame({ petName, accentColor, onComplete, onClose }: MiniGame
 
       {/* Challenge card */}
       <div style={{
-        background: "#1a1a2e", border: `3px solid ${feedback ? (feedback.correct ? "#4cd964" : "#ff6b6b") : accentColor}`,
+        background: "#1a1a2e",
+        border: `3px solid ${feedback ? (feedback.correct ? "#4cd964" : "#ff6b6b") : accentColor}`,
         borderRadius: "12px", padding: "1.5rem", maxWidth: "340px", width: "100%",
         textAlign: "center", transition: "border-color 0.3s",
       }}>
-        {gameType === "vowels" ? (
+        {/* === PRESCHOOL GAME === */}
+        {gameType === "preschool" && (
           <>
-            <p style={{ fontSize: "10px", color: "#aaa", marginBottom: "12px" }}>
+            <p style={{ fontSize: "60px", marginBottom: "4px", lineHeight: 1 }}>
+              {current.image}
+            </p>
+            <p style={{ fontSize: "14px", color: "#fff", marginBottom: "4px", fontWeight: "bold" }}>
+              {current.word}
+            </p>
+            <p style={{ fontSize: "11px", color: "#aaa", marginBottom: "16px" }}>
+              ¿Con qué letra empieza?
+            </p>
+            <div style={{ display: "flex", gap: "8px", justifyContent: "center", flexWrap: "wrap" }}>
+              {VOWELS.map(v => (
+                <button
+                  key={v}
+                  onClick={() => handleAnswer(v)}
+                  disabled={!!feedback}
+                  style={{
+                    width: "52px", height: "52px", borderRadius: "12px",
+                    border: `2px solid ${
+                      selectedAnswer === v
+                        ? (feedback?.correct ? "#4cd964" : "#ff6b6b")
+                        : "#444"
+                    }`,
+                    background: selectedAnswer === v
+                      ? (feedback?.correct ? "rgba(76,217,100,0.2)" : "rgba(255,107,107,0.2)")
+                      : (v === current.letter && feedback && !feedback.correct)
+                        ? "rgba(76,217,100,0.15)"
+                        : "#0d0d1a",
+                    color: "#fff", fontSize: "22px", fontWeight: "bold",
+                    cursor: feedback ? "default" : "pointer",
+                    transition: "all 0.2s",
+                  }}
+                >
+                  {v}
+                </button>
+              ))}
+            </div>
+          </>
+        )}
+
+        {/* === VOWELS GAME === */}
+        {gameType === "vowels" && (
+          <>
+            <p style={{ fontSize: "48px", marginBottom: "4px", lineHeight: 1 }}>
               {current.hint}
+            </p>
+            <p style={{ fontSize: "10px", color: "#aaa", marginBottom: "10px" }}>
+              {current.label}
             </p>
             <p style={{
               fontSize: "28px", color: "#fff", letterSpacing: "8px",
@@ -289,7 +384,11 @@ export function MiniGame({ petName, accentColor, onComplete, onClose }: MiniGame
                   disabled={!!feedback}
                   style={{
                     width: "48px", height: "48px", borderRadius: "10px",
-                    border: `2px solid ${selectedAnswer === v ? (feedback?.correct ? "#4cd964" : "#ff6b6b") : "#444"}`,
+                    border: `2px solid ${
+                      selectedAnswer === v
+                        ? (feedback?.correct ? "#4cd964" : "#ff6b6b")
+                        : "#444"
+                    }`,
                     background: selectedAnswer === v
                       ? (feedback?.correct ? "rgba(76,217,100,0.2)" : "rgba(255,107,107,0.2)")
                       : (v === current.answer && feedback && !feedback.correct)
@@ -305,7 +404,10 @@ export function MiniGame({ petName, accentColor, onComplete, onClose }: MiniGame
               ))}
             </div>
           </>
-        ) : (
+        )}
+
+        {/* === MATH GAME === */}
+        {gameType === "math" && (
           <>
             <p style={{
               fontSize: "24px", color: "#fff", marginBottom: "1.25rem", fontWeight: "bold",
@@ -322,7 +424,11 @@ export function MiniGame({ petName, accentColor, onComplete, onClose }: MiniGame
                   disabled={!!feedback}
                   style={{
                     padding: "14px", borderRadius: "10px",
-                    border: `2px solid ${selectedAnswer === opt ? (feedback?.correct ? "#4cd964" : "#ff6b6b") : "#444"}`,
+                    border: `2px solid ${
+                      selectedAnswer === opt
+                        ? (feedback?.correct ? "#4cd964" : "#ff6b6b")
+                        : "#444"
+                    }`,
                     background: selectedAnswer === opt
                       ? (feedback?.correct ? "rgba(76,217,100,0.2)" : "rgba(255,107,107,0.2)")
                       : (opt === current.answer && feedback && !feedback.correct)
@@ -351,15 +457,17 @@ export function MiniGame({ petName, accentColor, onComplete, onClose }: MiniGame
         )}
       </div>
 
-      {/* Close button */}
+      {/* EXIT BUTTON — always visible */}
       <button
-        onClick={onClose}
+        onClick={handleExit}
         style={{
-          marginTop: "1rem", background: "none", border: "none",
-          color: "#666", fontSize: "11px", cursor: "pointer",
+          marginTop: "1rem", background: "rgba(255,255,255,0.1)",
+          border: "1px solid #555", borderRadius: "8px",
+          padding: "10px 24px",
+          color: "#aaa", fontSize: "12px", cursor: "pointer",
         }}
       >
-        ✕ Salir del juego
+        ✕ Salir{score > 0 ? ` (guardar ${score * 3} pts)` : ""}
       </button>
     </div>
   )
