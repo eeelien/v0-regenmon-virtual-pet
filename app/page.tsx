@@ -7,11 +7,13 @@ import { loadRegenmon, saveRegenmon, deleteRegenmon } from "@/lib/regenmon"
 import { deleteAllMemories } from "@/lib/memory"
 import { CreateScreen } from "@/components/create-screen"
 import { PetScreen } from "@/components/pet-screen"
+import { HatchScreen } from "@/components/hatch-screen"
 
 export default function Page() {
   const { ready, authenticated, login } = usePrivy()
   const [regenmon, setRegenmon] = useState<RegenmonData | null>(null)
   const [loaded, setLoaded] = useState(false)
+  const [hatching, setHatching] = useState<{ name: string; type: RegenmonType } | null>(null)
 
   useEffect(() => {
     if (ready && authenticated) {
@@ -22,9 +24,14 @@ export default function Page() {
   }, [ready, authenticated])
 
   function handleCreate(name: string, type: RegenmonType) {
+    setHatching({ name, type })
+  }
+
+  function handleHatchComplete() {
+    if (!hatching) return
     const newPet: RegenmonData = {
-      name,
-      type,
+      name: hatching.name,
+      type: hatching.type,
       happiness: 50,
       energy: 50,
       hunger: 50,
@@ -36,6 +43,7 @@ export default function Page() {
     }
     saveRegenmon(newPet)
     setRegenmon(newPet)
+    setHatching(null)
   }
 
   function handleUpdate(updated: RegenmonData) {
@@ -82,6 +90,10 @@ export default function Page() {
         </p>
       </main>
     )
+  }
+
+  if (hatching) {
+    return <HatchScreen name={hatching.name} type={hatching.type} onComplete={handleHatchComplete} />
   }
 
   if (!regenmon) {
