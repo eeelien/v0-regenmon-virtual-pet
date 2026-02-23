@@ -274,23 +274,63 @@ export function PetScreen({ data, onUpdate, onReset }: PetScreenProps) {
                 </div>
               </div>
 
-              {/* Pet image */}
+              {/* Pet image — interactive */}
               <div className="relative">
+                <style jsx>{`
+                  @keyframes pet-breathe {
+                    0%, 100% { transform: scaleY(1) translateY(0); }
+                    50% { transform: scaleY(1.02) translateY(-2px); }
+                  }
+                  @keyframes pet-blink {
+                    0%, 92%, 100% { clip-path: inset(0 0 0 0); }
+                    95% { clip-path: inset(35% 0 35% 0); }
+                  }
+                  @keyframes pet-hop {
+                    0%, 100% { transform: translateY(0); }
+                    30% { transform: translateY(-12px); }
+                    50% { transform: translateY(-8px); }
+                    70% { transform: translateY(-12px); }
+                  }
+                  @keyframes pet-sway {
+                    0%, 100% { transform: rotate(0deg); }
+                    25% { transform: rotate(-3deg); }
+                    75% { transform: rotate(3deg); }
+                  }
+                  .pet-breathe { animation: pet-breathe 3s ease-in-out infinite; }
+                  .pet-blink { animation: pet-blink 4s ease-in-out infinite; }
+                  .pet-hop { animation: pet-hop 0.6s ease-in-out; }
+                  .pet-sway { animation: pet-sway 2s ease-in-out infinite; }
+                  .pet-interactive { cursor: pointer; transition: filter 0.2s; }
+                  .pet-interactive:hover { filter: brightness(1.1); }
+                  .pet-interactive:active { transform: scale(0.95); }
+                `}</style>
                 <div
                   className="absolute inset-0 opacity-20 blur-xl"
                   style={{ background: config.colorHex }}
                 />
-                <div className={`relative ${isAnimating ? "animate-wiggle" : "animate-float"}`}>
+                <div
+                  className={`relative pet-interactive ${isAnimating ? "pet-hop" : "pet-breathe pet-sway"}`}
+                  onClick={() => {
+                    if (!isAnimating) {
+                      setIsAnimating(true)
+                      setActionFeedback(["💕", "✨", "😊", "🎵", "💫"][Math.floor(Math.random() * 5)])
+                      setTimeout(() => setIsAnimating(false), 600)
+                      setTimeout(() => setActionFeedback(null), 1500)
+                    }
+                  }}
+                >
                   <div className="pet-frame" style={{ borderColor: `${config.colorHex}60` }}>
-                    <Image
-                      src={config.image}
-                      alt={`Tu Regenmon ${data.name}, tipo ${config.label}`}
-                      width={160}
-                      height={160}
-                      className="block"
-                      style={{ imageRendering: "pixelated" }}
-                      priority
-                    />
+                    <div className="pet-blink">
+                      <Image
+                        src={config.image}
+                        alt={`Tu Regenmon ${data.name}, tipo ${config.label}`}
+                        width={160}
+                        height={160}
+                        className="block"
+                        style={{ imageRendering: "pixelated" }}
+                        priority
+                      />
+                    </div>
                   </div>
                 </div>
 
@@ -345,6 +385,14 @@ export function PetScreen({ data, onUpdate, onReset }: PetScreenProps) {
               </div>
             </div>
 
+            {/* Chat — right below pet */}
+            <ChatContainer
+              messages={messages}
+              petColor={config.colorHex}
+              onSend={handleChatSend}
+              petName={data.name}
+            />
+
             {/* Action buttons */}
             <div className="nes-container is-rounded animate-slide-up" style={{ animationDelay: "0.1s" }}>
               <p className="text-[9px] mb-3" style={{ color: "#484f58" }}>
@@ -392,14 +440,6 @@ export function PetScreen({ data, onUpdate, onReset }: PetScreenProps) {
                 <StatBar label="Hambre" value={data.hunger} max={100} colorClass="stat-fill-red" icon={"\u{1F34E}"} />
               </div>
             </div>
-
-            {/* Chat */}
-            <ChatContainer
-              messages={messages}
-              petColor={config.colorHex}
-              onSend={handleChatSend}
-              petName={data.name}
-            />
 
             {/* Created date */}
             <p className="text-center text-[9px] pb-4" style={{ color: "#30363d" }}>
