@@ -42,7 +42,7 @@ export default function LeaderboardPage() {
         ) : (
           <div className="flex flex-col gap-2">
             {profiles.map((p, i) => (
-              <Link key={p.id} href={`/regenmon/${p.id}`}>
+              <Link key={p.id} href={`/profile?id=${p.id}`}>
                 <div className="nes-container is-rounded" style={{ cursor: "pointer", padding: "8px 12px" }}>
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">

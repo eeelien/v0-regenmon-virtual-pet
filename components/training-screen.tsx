@@ -108,7 +108,7 @@ export function TrainingScreen({ data, onUpdate, accentColor }: TrainingScreenPr
     setIsEvaluating(true)
 
     try {
-      const res = await fetch("/api/demo/evaluate", {
+      const res = await fetch("https://v0-regenmon-virtual-pet-three.vercel.app/api/demo/evaluate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ imageBase64, category }),
