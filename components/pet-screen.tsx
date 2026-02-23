@@ -18,6 +18,10 @@ import { ChatContainer, type ChatMessage } from "@/components/chat-bubble"
 import { MemoryIndicator } from "@/components/memory-indicator"
 import { FloatingTextLayer, useFloatingText } from "@/components/floating-text"
 import { TrainingScreen } from "@/components/training-screen"
+import { RegisterHub } from "@/components/register-hub"
+import { ActivityFeed } from "@/components/activity-feed"
+import { useHub, type HubProfile } from "@/hooks/useHub"
+import { useHubSync } from "@/hooks/useHubSync"
 
 interface PetScreenProps {
   data: RegenmonData
@@ -25,7 +29,7 @@ interface PetScreenProps {
   onReset: () => void
 }
 
-type Tab = "mascota" | "entrenar"
+type Tab = "mascota" | "entrenar" | "social"
 
 let msgId = 0
 
@@ -36,8 +40,24 @@ export function PetScreen({ data, onUpdate, onReset }: PetScreenProps) {
   const [isAnimating, setIsAnimating] = useState(false)
   const [messages, setMessages] = useState<ChatMessage[]>([])
   const [memories, setMemories] = useState<Memory[]>([])
+  const [hubRegistered, setHubRegistered] = useState(false)
+  const [leaderboard, setLeaderboard] = useState<HubProfile[]>([])
   const config = TYPE_CONFIG[data.type]
   const floating = useFloatingText()
+  const { getLeaderboard } = useHub()
+  useHubSync(data)
+
+  useEffect(() => {
+    const reg = localStorage.getItem("regenmon-hub-registered") === "true"
+    setHubRegistered(reg)
+  }, [])
+
+  useEffect(() => {
+    if (activeTab === "social") {
+      getLeaderboard().then(setLeaderboard)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeTab])
 
   useEffect(() => {
     setMemories(loadMemories())
@@ -163,7 +183,7 @@ export function PetScreen({ data, onUpdate, onReset }: PetScreenProps) {
 
       {/* Tabs */}
       <nav className="w-full max-w-lg animate-slide-up" style={{ animationDelay: "0.02s" }}>
-        <div className="grid grid-cols-2 gap-0">
+        <div className="grid grid-cols-3 gap-0">
           <button
             type="button"
             className={`tab-btn ${activeTab === "mascota" ? "tab-btn-active" : ""}`}
@@ -179,6 +199,14 @@ export function PetScreen({ data, onUpdate, onReset }: PetScreenProps) {
             onClick={() => setActiveTab("entrenar")}
           >
             {"\u{1F393} Entrenar"}
+          </button>
+          <button
+            type="button"
+            className={`tab-btn ${activeTab === "social" ? "tab-btn-active" : ""}`}
+            style={activeTab === "social" ? { borderColor: "#209cee", color: "#209cee" } : {}}
+            onClick={() => setActiveTab("social")}
+          >
+            {"\u{1F30D} La Red"}
           </button>
         </div>
       </nav>
@@ -348,9 +376,47 @@ export function PetScreen({ data, onUpdate, onReset }: PetScreenProps) {
               })}
             </p>
           </>
-        ) : (
+        ) : activeTab === "entrenar" ? (
           /* Training tab */
           <TrainingScreen data={data} onUpdate={onUpdate} accentColor={config.colorHex} />
+        ) : (
+          /* Social tab */
+          <>
+            {!hubRegistered ? (
+              <RegisterHub
+                data={data}
+                accentColor={config.colorHex}
+                onRegistered={(id) => setHubRegistered(true)}
+              />
+            ) : (
+              <>
+                {/* Leaderboard */}
+                <div className="nes-container is-rounded animate-slide-up">
+                  <p className="text-[9px] mb-3" style={{ color: "#484f58" }}>🏆 Leaderboard</p>
+                  {leaderboard.length === 0 ? (
+                    <p className="text-[8px]" style={{ color: "#8b949e" }}>
+                      No hay Regenmons registrados aún — o el HUB no está disponible.
+                    </p>
+                  ) : (
+                    <div className="flex flex-col gap-2">
+                      {leaderboard.sort((a, b) => b.totalPoints - a.totalPoints).slice(0, 10).map((p, i) => (
+                        <div key={p.id} className="flex items-center justify-between text-[8px]" style={{ color: "#c9d1d9" }}>
+                          <span>
+                            <span style={{ color: i === 0 ? "#ffdd57" : "#8b949e" }}>#{i + 1}</span>
+                            {" "}{p.name}
+                          </span>
+                          <span style={{ color: "#8b949e" }}>{p.totalPoints} pts</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {/* Activity Feed */}
+                <ActivityFeed accentColor={config.colorHex} />
+              </>
+            )}
+          </>
         )}
       </div>
 
