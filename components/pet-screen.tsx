@@ -1,10 +1,16 @@
 "use client"
 
-import { useState, useCallback } from "react"
+import { useState, useCallback, useEffect } from "react"
 import Image from "next/image"
 import type { RegenmonData } from "@/lib/regenmon"
 import { TYPE_CONFIG, saveRegenmon } from "@/lib/regenmon"
+import { loadMemories, extractMemories, addMemory } from "@/lib/memory"
+import type { Memory } from "@/lib/memory"
+import { generatePetResponse } from "@/lib/chat"
 import { StatBar } from "@/components/stat-bar"
+import { ChatContainer, type ChatMessage } from "@/components/chat-bubble"
+import { MemoryIndicator } from "@/components/memory-indicator"
+import { FloatingTextLayer, useFloatingText } from "@/components/floating-text"
 
 interface PetScreenProps {
   data: RegenmonData
@@ -12,11 +18,20 @@ interface PetScreenProps {
   onReset: () => void
 }
 
+let msgId = 0
+
 export function PetScreen({ data, onUpdate, onReset }: PetScreenProps) {
   const [showConfirm, setShowConfirm] = useState(false)
   const [actionFeedback, setActionFeedback] = useState<string | null>(null)
   const [isAnimating, setIsAnimating] = useState(false)
+  const [messages, setMessages] = useState<ChatMessage[]>([])
+  const [memories, setMemories] = useState<Memory[]>([])
   const config = TYPE_CONFIG[data.type]
+  const floating = useFloatingText()
+
+  useEffect(() => {
+    setMemories(loadMemories())
+  }, [])
 
   const showFeedback = useCallback((message: string) => {
     setActionFeedback(message)
@@ -31,7 +46,17 @@ export function PetScreen({ data, onUpdate, onReset }: PetScreenProps) {
     return Math.max(min, Math.min(max, val))
   }
 
+  function spawnStatChange(label: string, delta: number, color: string) {
+    if (delta > 0) {
+      floating.spawn(`+${delta} ${label}`, color)
+    } else if (delta < 0) {
+      floating.spawn(`${delta} ${label}`, "#ff6b6b")
+    }
+  }
+
   function handleFeed() {
+    const hungerDelta = Math.min(15, 100 - data.hunger)
+    const energyDelta = Math.min(5, 100 - data.energy)
     const updated: RegenmonData = {
       ...data,
       hunger: clamp(data.hunger + 15, 0, 100),
@@ -40,9 +65,12 @@ export function PetScreen({ data, onUpdate, onReset }: PetScreenProps) {
     saveRegenmon(updated)
     onUpdate(updated)
     showFeedback("Mmmm... delicioso!")
+    if (hungerDelta > 0) spawnStatChange("Hambre", hungerDelta, "#209cee")
+    if (energyDelta > 0) setTimeout(() => spawnStatChange("Energia", energyDelta, "#ffdd57"), 300)
   }
 
   function handlePlay() {
+    const happinessDelta = Math.min(15, 100 - data.happiness)
     const updated: RegenmonData = {
       ...data,
       happiness: clamp(data.happiness + 15, 0, 100),
@@ -52,9 +80,12 @@ export function PetScreen({ data, onUpdate, onReset }: PetScreenProps) {
     saveRegenmon(updated)
     onUpdate(updated)
     showFeedback("Que divertido!")
+    if (happinessDelta > 0) spawnStatChange("Felicidad", happinessDelta, "#4cd964")
+    setTimeout(() => spawnStatChange("Energia", -10, "#ff6b6b"), 300)
   }
 
   function handleSleep() {
+    const energyDelta = Math.min(20, 100 - data.energy)
     const updated: RegenmonData = {
       ...data,
       energy: clamp(data.energy + 20, 0, 100),
@@ -63,18 +94,54 @@ export function PetScreen({ data, onUpdate, onReset }: PetScreenProps) {
     saveRegenmon(updated)
     onUpdate(updated)
     showFeedback("Zzz... descansando")
+    if (energyDelta > 0) spawnStatChange("Energia", energyDelta, "#ffdd57")
+    setTimeout(() => spawnStatChange("Felicidad", -5, "#ff6b6b"), 300)
+  }
+
+  function handleChatSend(text: string) {
+    const userMsg: ChatMessage = {
+      id: ++msgId,
+      text,
+      sender: "user",
+      timestamp: Date.now(),
+    }
+
+    // Extract and save memories from user message
+    const extracted = extractMemories(text)
+    let currentMemories = memories
+    for (const mem of extracted) {
+      currentMemories = addMemory(mem)
+    }
+    if (extracted.length > 0) {
+      setMemories(currentMemories)
+    }
+
+    // Generate pet response using memories
+    const responseText = generatePetResponse(text, data, currentMemories)
+    const petMsg: ChatMessage = {
+      id: ++msgId,
+      text: responseText,
+      sender: "pet",
+      timestamp: Date.now(),
+    }
+
+    setMessages((prev) => [...prev, userMsg, petMsg])
   }
 
   const mood = data.happiness > 70 ? "Feliz" : data.happiness > 40 ? "Normal" : "Triste"
-  const moodColor = data.happiness > 70 ? "#4cd964" : data.happiness > 40 ? config.colorHex : "#ff6b6b"
 
   return (
     <main className="min-h-screen flex flex-col items-center px-4 py-6 gap-5">
+      <FloatingTextLayer items={floating.items} />
+
       {/* Header */}
       <header className="w-full max-w-lg flex items-center justify-between animate-slide-up">
-        <h1 className="text-xs" style={{ color: config.colorHex }}>
-          {"Regenmon"}
-        </h1>
+        <div className="flex items-center gap-3">
+          <h1 className="text-xs" style={{ color: config.colorHex }}>
+            {"Regenmon"}
+          </h1>
+          <MemoryIndicator memories={memories} color={config.colorHex} />
+        </div>
         <button
           type="button"
           className="nes-btn is-error"
@@ -120,7 +187,7 @@ export function PetScreen({ data, onUpdate, onReset }: PetScreenProps) {
             <div className={`relative ${isAnimating ? "animate-wiggle" : "animate-float"}`}>
               <div className="pet-frame" style={{ borderColor: `${config.colorHex}60` }}>
                 <Image
-                  src={config.image || "/placeholder.svg"}
+                  src={config.image}
                   alt={`Tu Regenmon ${data.name}, tipo ${config.label}`}
                   width={160}
                   height={160}
@@ -196,6 +263,14 @@ export function PetScreen({ data, onUpdate, onReset }: PetScreenProps) {
             <StatBar label="Hambre" value={data.hunger} max={100} colorClass="stat-fill-blue" icon="🍖" />
           </div>
         </div>
+
+        {/* Chat */}
+        <ChatContainer
+          messages={messages}
+          petColor={config.colorHex}
+          onSend={handleChatSend}
+          petName={data.name}
+        />
 
         {/* Created date */}
         <p className="text-center text-[9px] pb-4" style={{ color: "#30363d" }}>

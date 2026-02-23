@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react"
 import type { RegenmonData, RegenmonType } from "@/lib/regenmon"
 import { loadRegenmon, saveRegenmon, deleteRegenmon } from "@/lib/regenmon"
+import { deleteAllMemories } from "@/lib/memory"
 import { CreateScreen } from "@/components/create-screen"
 import { PetScreen } from "@/components/pet-screen"
 
@@ -35,6 +36,7 @@ export default function Page() {
 
   function handleReset() {
     deleteRegenmon()
+    deleteAllMemories()
     setRegenmon(null)
   }
 
